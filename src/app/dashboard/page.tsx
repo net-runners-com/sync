@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, ArrowRight, Instagram, Twitter, Play, Plus, MoreVertical, Trash2, Edit3, Clock, CheckCircle, PauseCircle, Loader2 } from "lucide-react";
+import { Sparkles, ArrowRight, Activity, Clock, MoreVertical, Trash2, Edit3, Loader2, PlayCircle, PlusCircle, CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -14,99 +14,13 @@ type Workflow = {
   updatedAt: string;
 };
 
-function WorkflowCard({ workflow, onDelete }: { workflow: Workflow; onDelete: (id: string) => void }) {
-  const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm(`「${workflow.name}」を削除しますか？`)) return;
-    setDeleting(true);
-    try {
-      await fetch(`/api/workflows/${workflow.id}`, { method: "DELETE" });
-      onDelete(workflow.id);
-    } finally {
-      setDeleting(false);
-      setMenuOpen(false);
-    }
-  };
-
-  const timeAgo = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (diff < 60) return `${diff}秒前`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}分前`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
-    return `${Math.floor(diff / 86400)}日前`;
-  };
-
-  return (
-    <div
-      className="group bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer relative overflow-hidden"
-      onClick={() => router.push(`/editor?id=${workflow.id}`)}
-    >
-      {/* カラーアクセント */}
-      <div className="h-1.5 bg-gradient-to-r from-blue-500 to-purple-600 w-full" />
-
-      <div className="p-5 flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-bold text-slate-900 text-base leading-tight line-clamp-2 flex-1">{workflow.name}</h3>
-          <div className="relative flex-shrink-0">
-            <button
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors opacity-0 group-hover:opacity-100"
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-            >
-              <MoreVertical size={16} />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-8 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden min-w-[140px]">
-                <button
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                  onClick={(e) => { e.stopPropagation(); router.push(`/editor?id=${workflow.id}`); setMenuOpen(false); }}
-                >
-                  <Edit3 size={14} /> 編集する
-                </button>
-                <button
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                >
-                  {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                  削除する
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {workflow.description && (
-          <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{workflow.description}</p>
-        )}
-
-        <div className="flex items-center justify-between mt-1">
-          <div className="flex items-center gap-1.5">
-            {workflow.isActive ? (
-              <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                <CheckCircle size={11} /> 稼働中
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                <PauseCircle size={11} /> 停止中
-              </span>
-            )}
-          </div>
-          <span className="flex items-center gap-1 text-xs text-slate-400">
-            <Clock size={11} /> {timeAgo(workflow.updatedAt)}
-          </span>
-        </div>
-      </div>
-
-      {/* ホバー時のオーバーレイ */}
-      <div className="absolute inset-0 border-2 border-blue-500 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity" />
-    </div>
-  );
-}
+// ダミーデータ: 直近の実行ログ (本来はAPIから取得)
+const recentExecutions = [
+  { id: "e1", wfName: "毎朝のニュース要約", status: "success", time: "10分前", duration: "1.2s" },
+  { id: "e2", wfName: "Instagram画像生成", status: "error", time: "1時間前", duration: "5.4s" },
+  { id: "e3", wfName: "ユーザーへの自動返信", status: "success", time: "3時間前", duration: "0.8s" },
+  { id: "e4", wfName: "週間レポート作成", status: "running", time: "実行中", duration: "-" },
+];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -123,10 +37,6 @@ export default function DashboardPage() {
       })
       .finally(() => setLoading(false));
   }, []);
-
-  const handleDelete = (id: string) => {
-    setWorkflows((prev) => prev.filter((w) => w.id !== id));
-  };
 
   const handleCreateBlank = async () => {
     setCreating(true);
@@ -145,71 +55,198 @@ export default function DashboardPage() {
     }
   };
 
-  const templates = [
-    { id: "t1", title: "毎日名言ボット (X推し)", desc: "毎朝8時に偉人の名言をテキスト生成し、X(Twitter)へ自動投稿します。", icon: Twitter, color: "text-blue-500", bg: "bg-blue-50" },
-    { id: "t2", title: "Instagram映え 画像生成", desc: "トレンドワードからDALL-E3で画像を生成し、Instagramへ自動投稿します。", icon: Instagram, color: "text-pink-500", bg: "bg-pink-50" },
-    { id: "t3", title: "ブログ要約 → 動画化", desc: "RSSを読み取り、要約テキストからRunwayでショート動画を生成します。", icon: Play, color: "text-orange-500", bg: "bg-orange-50" },
-  ];
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "success": return <CheckCircle2 className="text-emerald-500" size={18} />;
+      case "error": return <XCircle className="text-rose-500" size={18} />;
+      case "running": return <Loader2 className="text-blue-500 animate-spin" size={18} />;
+      default: return <Clock className="text-slate-400" size={18} />;
+    }
+  };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto flex flex-col gap-12">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">新しいプロジェクトを作成</h1>
-        <p className="text-slate-500 mt-2">AIアシスタントに作りたいフローを伝えるか、テンプレートから始めてください。</p>
-      </header>
-
-      {/* AI Assist Section */}
-      <section className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-1 shadow-xl">
-        <div className="bg-white/10 backdrop-blur-md rounded-[22px] p-8 flex flex-col gap-6">
-          <div className="flex items-center gap-3 text-white">
-            <Sparkles size={28} className="text-yellow-300" />
-            <h2 className="text-xl font-bold">AIアシストでワークフローを自動生成</h2>
-          </div>
-          <div className="relative">
-            <textarea
-              className="w-full bg-white rounded-2xl p-6 pr-16 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-400/50 resize-none h-32 shadow-inner text-lg"
-              placeholder='例: 「毎朝9時にAIニュースを収集して、要約をTwitterとFacebookに画像付きで投稿するフローを作って」'
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-            />
-            <button className="absolute bottom-6 right-6 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full transition-transform hover:scale-105 shadow-lg flex items-center justify-center">
-              <ArrowRight size={20} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Template Gallery */}
-      <section className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">テンプレートギャラリー</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button
-            onClick={handleCreateBlank}
-            disabled={creating}
-            className="group border-2 border-dashed border-slate-300 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:border-blue-500 hover:bg-blue-50/50 transition-colors cursor-pointer min-h-[180px] disabled:opacity-60"
-          >
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
-              {creating ? <Loader2 size={22} className="animate-spin" /> : <Plus size={22} />}
-            </div>
-            <div className="text-lg font-bold text-slate-700 group-hover:text-blue-700">空から作成</div>
-          </button>
-          {templates.map((tpl) => (
-            <div key={tpl.id} className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer min-h-[180px]" onClick={handleCreateBlank}>
-              <div className={`w-12 h-12 rounded-2xl ${tpl.bg} ${tpl.color} flex items-center justify-center`}>
-                <tpl.icon size={24} />
+    <div className="p-6 md:p-10 max-w-7xl mx-auto flex flex-col gap-10">
+      
+      {/* 🚀 Top Creative Header Segment */}
+      <section className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 border border-slate-800 p-10 md:p-14 shadow-2xl">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 p-32 bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-10 p-40 bg-purple-500/10 rounded-full blur-[140px] pointer-events-none" />
+        
+        <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
+          <div className="flex flex-col gap-6">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
+              アイデアを、<br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+                自動化の力で現実に。
+              </span>
+            </h1>
+            <p className="text-lg text-slate-400">
+              AIアシスタントに作りたいものを伝えるだけで、複雑なワークフローが数秒で完成します。
+            </p>
+            
+            <div className="relative mt-4 group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+              <div className="relative flex items-center bg-slate-800/80 backdrop-blur-xl border border-slate-700 rounded-2xl p-2 shadow-inner">
+                <Sparkles className="text-yellow-400 ml-4 mr-2" size={24} />
+                <input
+                  className="flex-1 bg-transparent border-none text-white placeholder-slate-400 focus:outline-none focus:ring-0 text-base md:text-lg px-2 py-4"
+                  placeholder="どんなワークフローを作りますか？ (例: 毎朝ニュースを要約して投稿)"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                />
+                <button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white p-4 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center">
+                  <ArrowRight size={20} />
+                </button>
               </div>
-              <h3 className="text-base font-bold text-slate-900">{tpl.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed flex-1">{tpl.desc}</p>
-              <button className="mt-auto w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-colors">
-                このテンプレートを使う
-              </button>
             </div>
-          ))}
+          </div>
+
+          {/* Quick Stats Mini Cards */}
+          <div className="hidden md:grid grid-cols-2 gap-4">
+            <div className="bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6 rounded-2xl flex flex-col gap-2">
+              <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mb-2">
+                <Activity size={20} />
+              </div>
+              <p className="text-slate-400 text-sm font-medium">本日の実行回数</p>
+              <p className="text-3xl font-bold text-white">1,284<span className="text-sm font-normal text-slate-500 ml-1">回</span></p>
+            </div>
+            <div className="bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6 rounded-2xl flex flex-col gap-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-2">
+                <CheckCircle2 size={20} />
+              </div>
+              <p className="text-slate-400 text-sm font-medium">成功率</p>
+              <p className="text-3xl font-bold text-white">99.8<span className="text-sm font-normal text-slate-500 ml-1">%</span></p>
+            </div>
+            <div className="col-span-2 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur border border-slate-700/50 p-6 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-slate-800/80 transition-colors" onClick={handleCreateBlank}>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                   {creating ? <Loader2 className="animate-spin" size={24} /> : <PlusCircle size={24} />}
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold text-lg">ゼロから作成する</h3>
+                  <p className="text-slate-400 text-sm">空のキャンバスから手動でノードを配置</p>
+                </div>
+              </div>
+              <ArrowRight className="text-slate-500 group-hover:text-white transition-colors" size={20} />
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* 📊 Content Grid (My Workflows & Activity) */}
+      <div className="grid lg:grid-cols-3 gap-8">
+        
+        {/* Left Column: My Workflows */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <LayoutGrid className="text-blue-500" size={24} />
+              マイワークフロー
+            </h2>
+            <Link href="/dashboard/projects" className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+              すべて見る →
+            </Link>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 gap-4">
+            {loading ? (
+              Array(4).fill(0).map((_, i) => (
+                <div key={i} className="animate-pulse bg-slate-200 dark:bg-slate-800 h-40 rounded-2xl" />
+              ))
+            ) : workflows.length === 0 ? (
+              <div className="col-span-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 flex flex-col items-center justify-center text-center gap-4">
+                <div className="w-16 h-16 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                  <PlusCircle className="text-slate-400" size={32} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">最初のワークフローを作成</h3>
+                  <p className="text-slate-500 dark:text-slate-400 mt-1">上のAIアシスト枠からプロンプトを入力して自動生成するか、空のキャンバスから始めましょう。</p>
+                </div>
+              </div>
+            ) : (
+              workflows.slice(0, 4).map((workflow) => (
+                <div key={workflow.id} onClick={() => router.push(`/editor?id=${workflow.id}`)} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-lg hover:border-blue-500/50 dark:hover:border-blue-500/50 cursor-pointer transition-all relative overflow-hidden flex flex-col gap-4">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white line-clamp-1">{workflow.name}</h3>
+                    <div className="bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                      {workflow.isActive ? <span className="w-2 h-2 rounded-full bg-emerald-500" /> : <span className="w-2 h-2 rounded-full bg-slate-400" />}
+                      {workflow.isActive ? 'Active' : 'Paused'}
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[40px]">
+                    {workflow.description || "説明がありません"}
+                  </p>
+                  
+                  <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3 mt-auto">
+                    <span>最終更新: {new Date(workflow.updatedAt).toLocaleDateString()}</span>
+                    <button className="text-blue-600 dark:text-blue-400 font-medium group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                      編集 <ArrowRight size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Activity & Schedule */}
+        <div className="flex flex-col gap-6">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Activity className="text-purple-500" size={24} />
+            最近のアクティビティ
+          </h2>
+          
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
+              <span className="font-semibold text-slate-700 dark:text-slate-200 text-sm">実行履歴</span>
+              <button className="text-xs text-blue-600 dark:text-blue-400 font-medium">詳細を見る</button>
+            </div>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {recentExecutions.map((exec) => (
+                <div key={exec.id} className="p-4 flex flex-col gap-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                       {getStatusIcon(exec.status)}
+                       <span className="font-medium text-slate-900 dark:text-slate-200 text-sm truncate max-w-[150px]">{exec.wfName}</span>
+                    </div>
+                    <span className="text-xs text-slate-500">{exec.time}</span>
+                  </div>
+                  {exec.status !== "running" && (
+                    <div className="flex items-center gap-3 text-xs pl-7">
+                      <span className="text-slate-500">処理時間: <span className="text-slate-700 dark:text-slate-300">{exec.duration}</span></span>
+                      {exec.status === "error" && <span className="text-rose-500">APIキー無効</span>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden mt-4">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+             <div className="relative z-10 flex flex-col gap-3">
+               <div className="flex items-center gap-2 text-blue-100 font-medium text-sm">
+                 <Clock size={16} /> 次の予定タスク
+               </div>
+               <h3 className="text-xl font-bold">15:00 定期ツイート</h3>
+               <p className="text-sm text-blue-100/80">あと 45分 で実行されます</p>
+               <button className="mt-2 bg-white/20 hover:bg-white/30 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors w-fit backdrop-blur-sm border border-white/10">
+                 スケジュールを確認
+               </button>
+             </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
+
+// 足りないアイコンのモック
+const LayoutGrid = ({ className, size }: { className?: string, size?: number }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+);

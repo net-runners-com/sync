@@ -97,49 +97,49 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-full bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
       <div className="p-8 max-w-4xl mx-auto flex flex-col gap-8">
         <header>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">連携・設定</h1>
-          <p className="text-slate-500 mt-2">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">連携・設定</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">
             ワークフローから各プラットフォームへ投稿するために、SNS・外部サービスのアカウントを連携してください。
           </p>
         </header>
 
         {/* 重要なお知らせ */}
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex gap-3 items-start text-sm">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" />
-          <div className="text-amber-800">
-            <span className="font-bold block mb-1">Metaアプリの設定が必要です</span>
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-4 rounded-xl flex gap-3 items-start text-sm">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600 dark:text-amber-500 mt-0.5" />
+          <div className="text-amber-800 dark:text-amber-200">
+            <span className="font-bold block mb-1 text-amber-900 dark:text-amber-400">Metaアプリの設定が必要です</span>
             Facebookでの連携を有効にするには、<strong>Meta for Developers</strong>でアプリを作成し、
-            <code className="bg-amber-100 px-1 rounded mx-1">FACEBOOK_CLIENT_ID</code>と
-            <code className="bg-amber-100 px-1 rounded mx-1">FACEBOOK_CLIENT_SECRET</code>
-            を<code className="bg-amber-100 px-1 rounded">.env</code>ファイルに設定してください。
-            コールバックURL: <code className="bg-amber-100 px-1 rounded text-xs">http://localhost:3000/api/auth/callback/facebook</code>
+            <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded mx-1">FACEBOOK_CLIENT_ID</code>と
+            <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded mx-1">FACEBOOK_CLIENT_SECRET</code>
+            を<code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">.env</code>ファイルに設定してください。
+            コールバックURL: <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded text-xs select-all">http://localhost:3000/api/auth/callback/facebook</code>
           </div>
         </div>
 
         {/* テーマ設定 */}
-        <div className="bg-white border flex-shrink-0 border-slate-200 rounded-2xl p-6 shadow-sm">
-          <h2 className="font-bold text-slate-900 mb-4">テーマ設定</h2>
+        <div className="bg-white dark:bg-slate-900 border flex-shrink-0 border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <h2 className="font-bold text-slate-900 dark:text-white mb-4">テーマ設定</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button 
               onClick={() => setTheme("light")}
-              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'light' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'light' ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-600 dark:text-slate-400'}`}
             >
               <Sun size={24} className="mb-2" />
               <span className="text-sm font-semibold">ライト</span>
             </button>
             <button 
               onClick={() => setTheme("dark")}
-              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-600 dark:text-slate-400'}`}
             >
               <Moon size={24} className="mb-2" />
               <span className="text-sm font-semibold">ダーク</span>
             </button>
             <button 
               onClick={() => setTheme("system")}
-              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'system' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'system' ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-600 dark:text-slate-400'}`}
             >
               <Monitor size={24} className="mb-2" />
               <span className="text-sm font-semibold">システム</span>
@@ -158,33 +158,33 @@ export default function SettingsPage() {
             platforms.map((platform, index) => (
               <div
                 key={index}
-                className={`flex items-center justify-between p-6 bg-white border rounded-2xl shadow-sm hover:shadow-md transition-shadow ${platform.connected ? "border-green-200 bg-green-50/30" : "border-slate-200"}`}
+                className={`flex items-center justify-between p-6 bg-white dark:bg-slate-900 border rounded-2xl shadow-sm hover:shadow-md transition-shadow ${platform.connected ? "border-green-200 dark:border-green-900/50 bg-green-50/30 dark:bg-green-900/10" : "border-slate-200 dark:border-slate-800"}`}
               >
                 <div className="flex items-center gap-5">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${platform.color} border ${platform.borderColor}`}>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${platform.color} border ${platform.borderColor} dark:bg-opacity-10 dark:border-opacity-20`}>
                     {platform.icon}
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-lg font-bold text-slate-900">{platform.name}</h3>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{platform.name}</h3>
                       {platform.connected && platform.hasToken && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
                           <CheckCircle2 size={12} />
                           連携済み
                         </span>
                       )}
                       {platform.disabled && (
-                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
                           準備中
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-500 mt-1">{platform.description}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{platform.description}</p>
                     {(!platform.connected || !platform.hasToken) && platform.note && (
-                      <p className="text-xs text-purple-600 mt-1 font-medium">📎 {platform.note}</p>
+                      <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">📎 {platform.note}</p>
                     )}
                     {platform.connected && platform.hasToken && socialAccounts[platform.id as keyof SocialAccounts]?.accountId && (
-                      <p className="text-xs font-mono text-slate-500 mt-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 w-fit">
+                      <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 w-fit">
                         ID: {socialAccounts[platform.id as keyof SocialAccounts]?.accountId?.substring(0, 12)}...
                       </p>
                     )}
@@ -196,7 +196,7 @@ export default function SettingsPage() {
                   disabled={connecting !== null || platform.disabled}
                   className={`px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     platform.connected && platform.hasToken
-                      ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
                       : `text-white shadow-sm ${platform.accentColor}`
                   }`}
                 >
@@ -223,13 +223,13 @@ export default function SettingsPage() {
         </div>
 
         {/* スコープの説明 */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-          <h2 className="font-bold text-slate-900 mb-3">連携時に要求する権限について</h2>
-          <div className="space-y-2 text-sm text-slate-600">
-            <div className="flex gap-2"><span className="text-blue-500 font-mono">pages_manage_posts</span><span>– Facebookページへの投稿</span></div>
-            <div className="flex gap-2"><span className="text-blue-500 font-mono">pages_read_engagement</span><span>– いいね・コメントなどのエンゲージメント読み取り</span></div>
-            <div className="flex gap-2"><span className="text-pink-500 font-mono">instagram_basic</span><span>– Instagramアカウント情報の読み取り</span></div>
-            <div className="flex gap-2"><span className="text-pink-500 font-mono">instagram_content_publish</span><span>– Instagram への画像・動画投稿</span></div>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <h2 className="font-bold text-slate-900 dark:text-white mb-3">連携時に要求する権限について</h2>
+          <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+            <div className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 font-mono">pages_manage_posts</span><span>– Facebookページへの投稿</span></div>
+            <div className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 font-mono">pages_read_engagement</span><span>– いいね・コメントなどのエンゲージメント読み取り</span></div>
+            <div className="flex gap-2"><span className="text-pink-500 dark:text-pink-400 font-mono">instagram_basic</span><span>– Instagramアカウント情報の読み取り</span></div>
+            <div className="flex gap-2"><span className="text-pink-500 dark:text-pink-400 font-mono">instagram_content_publish</span><span>– Instagram への画像・動画投稿</span></div>
           </div>
         </div>
       </div>
