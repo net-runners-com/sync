@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Save, Settings, X, LogIn, LogOut, User } from "lucide-react";
+import { Play, Save, Settings, X, LogIn, LogOut, User, LayoutDashboard, Edit2 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -84,10 +84,28 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
   };
 
   return (
-    <header className="h-14 border-b bg-white flex items-center justify-between px-6 shadow-sm z-10 w-full">
-      <div className="flex items-center gap-4">
-        <h1 className="font-medium text-slate-800">{workflowName}</h1>
-        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+    <header className="h-14 border-b bg-white flex items-center justify-between px-4 md:px-6 shadow-sm z-10 w-full">
+      <div className="flex items-center gap-2 md:gap-4">
+        <Link href="/dashboard" className="hidden md:block">
+          <Button variant="ghost" size="sm" className="gap-2 text-slate-500 hover:text-slate-800">
+            <LayoutDashboard size={16} />
+            ダッシュボード
+          </Button>
+        </Link>
+        <div className="h-6 w-px bg-slate-200 hidden md:block"></div>
+        
+        <div className="flex items-center gap-2 group relative">
+          <input
+            type="text"
+            value={workflowName}
+            onChange={(e) => setWorkflowName(e.target.value)}
+            className="font-medium text-slate-800 bg-transparent border border-transparent hover:border-slate-200 hover:bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none rounded px-2 py-1 transition-colors w-[150px] md:w-[250px]"
+            placeholder="ワークフロー名"
+          />
+          <Edit2 size={12} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 pointer-events-none" />
+        </div>
+
+        <span className="px-2 py-1 bg-green-100 text-green-700 text-[10px] md:text-xs rounded-full font-medium whitespace-nowrap">
           Active
         </span>
       </div>

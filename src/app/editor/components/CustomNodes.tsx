@@ -3,7 +3,7 @@ import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { 
   Clock, MessageSquare, Image as ImageIcon, Twitter, Instagram, 
   Smartphone, GitBranch, Video, BarChart3, Facebook, Trash2, Upload,
-  X as XIcon, Calendar, PenTool, Database, LogIn, Box
+  X as XIcon, Calendar, PenTool, Database, LogIn, Box, FileText, Music
 } from 'lucide-react';
 
 const NodeHeader = ({ icon: Icon, title, gradient, nodeId }: { icon: any, title: string, gradient: string, nodeId: string }) => {
@@ -375,6 +375,38 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
         <NodeHeader icon={getIcon()} title={`SNS投稿: ${data.platformName || 'X (Twitter)'}`} gradient={getGradient()} nodeId={id} />
         <div className="p-4 flex flex-col gap-3">
           <div className="text-sm font-medium text-slate-700">{data.label || 'テキストと画像を投稿'}</div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-slate-500 font-semibold uppercase">投稿タイプ</label>
+            <select
+              className={`w-full text-xs p-1.5 border ${getBorderColor()} rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50`}
+              defaultValue={data.postType || 'feed'}
+              onChange={(e) => {}}
+            >
+              {data.platform === 'x' ? (
+                <>
+                  <option value="tweet">ツイート</option>
+                  <option value="thread">スレッド</option>
+                  <option value="quote">引用ツイート</option>
+                </>
+              ) : data.platform === 'facebook' ? (
+                <>
+                  <option value="feed">フィード投稿</option>
+                  <option value="story">ストーリーズ</option>
+                  <option value="reels">リール</option>
+                  <option value="event">イベント</option>
+                </>
+              ) : data.platform === 'instagram' ? (
+                <>
+                  <option value="feed">フィード投稿</option>
+                  <option value="story">ストーリーズ</option>
+                  <option value="reels">リール</option>
+                </>
+              ) : (
+                <option value="post">標準投稿</option>
+              )}
+            </select>
+          </div>
           
           {checkingAuth ? (
             <div className="mt-1 text-center text-xs text-slate-400 py-2">確認中...</div>
@@ -631,6 +663,130 @@ export const GoogleCalendarNode = memo(({ id, data }: { id: string, data: any })
 });
 GoogleCalendarNode.displayName = 'GoogleCalendarNode';
 
+
+// --- 新規追加: Google Docsノード ---
+export const GoogleDocsNode = memo(({ id, data }: { id: string, data: any }) => {
+  return (
+    <div className="bg-white border-2 border-emerald-400 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-white" />
+      <NodeHeader icon={FileText} title="Google Docs" gradient="from-emerald-400 to-teal-500" nodeId={id} />
+      <div className="p-4 flex flex-col gap-3">
+        <div className="text-sm font-medium text-slate-700">{data.label || 'ドキュメント操作'}</div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] text-slate-500 font-semibold uppercase">アクション</label>
+          <select 
+            className="w-full text-xs p-1.5 border border-emerald-200 rounded-md bg-emerald-50 text-emerald-700 focus:outline-none focus:border-emerald-400 cursor-pointer font-medium"
+            defaultValue={data.action || 'create-doc'}
+          >
+            <option value="create-doc">新規作成・追記</option>
+            <option value="read-doc">ドキュメントを読み取り</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1 mt-1">
+          <label className="text-[10px] text-slate-500 font-semibold uppercase">ドキュメントURL / ID</label>
+          <input 
+            type="text" 
+            placeholder="新規作成時は空欄" 
+            className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-emerald-400"
+            defaultValue={data.fileUrl || ''}
+          />
+        </div>
+        {!data.isAuthenticated && (
+          <div className="mt-2 flex flex-col gap-2">
+            <div className="text-[10px] text-red-500 font-semibold flex items-center gap-1">
+              <span>⚠️ アカウントへの連携が必要です</span>
+            </div>
+            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1 shadow-sm">
+              <LogIn size={14} />
+              Google アカウント連携
+            </button>
+          </div>
+        )}
+      </div>
+      <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-white" />
+    </div>
+  );
+});
+GoogleDocsNode.displayName = 'GoogleDocsNode';
+
+// --- 新規追加: noteノード ---
+export const NoteNode = memo(({ id, data }: { id: string, data: any }) => {
+  return (
+    <div className="bg-white border-2 border-emerald-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl relative">
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-white" />
+      <NodeHeader icon={FileText} title="noteに投稿" gradient="from-emerald-500 to-green-600" nodeId={id} />
+      <div className="absolute top-2 right-10 bg-slate-800 text-white text-[8px] px-1.5 py-0.5 rounded font-bold shadow-sm">
+        Coming Soon
+      </div>
+      <div className="p-4 flex flex-col gap-3">
+        <div className="text-sm font-medium text-slate-700">{data.label || 'note記事作成'}</div>
+        <div className="opacity-70">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-slate-500 font-semibold uppercase">タイトル</label>
+            <input 
+              type="text" 
+              placeholder="生成されたタイトル" 
+              className="w-full text-xs p-2 border border-slate-200 rounded-md cursor-not-allowed bg-slate-50"
+              disabled
+            />
+          </div>
+          <div className="flex flex-col gap-1 mt-1">
+            <label className="text-[10px] text-slate-500 font-semibold uppercase">ハッシュタグ</label>
+            <input 
+              type="text" 
+              placeholder="#note #AI" 
+              className="w-full text-xs p-2 border border-slate-200 rounded-md cursor-not-allowed bg-slate-50"
+              disabled
+            />
+          </div>
+        </div>
+        <div className="mt-1 flex flex-col gap-2">
+          <div className="text-[10px] text-slate-500 font-semibold bg-slate-100 p-1.5 rounded border border-slate-200 text-center">
+            公式APIが未公開のため、準備中です
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+NoteNode.displayName = 'NoteNode';
+
+// --- 新規追加: TikTokノード ---
+export const TiktokNode = memo(({ id, data }: { id: string, data: any }) => {
+  return (
+    <div className="bg-white border-2 border-slate-900 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl relative">
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-slate-400 !border-2 !border-white" />
+      <NodeHeader icon={Music} title="TikTokに投稿" gradient="from-slate-800 to-slate-900" nodeId={id} />
+      <div className="p-4 flex flex-col gap-3">
+        <div className="text-sm font-medium text-slate-700">{data.label || 'ショート動画を投稿'}</div>
+        
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] text-slate-500 font-semibold uppercase">投稿タイプ</label>
+          <select 
+            className="w-full text-xs p-1.5 border border-slate-200 rounded-md bg-white text-slate-700 focus:outline-none cursor-pointer font-medium"
+            defaultValue={data.postType || 'video'}
+          >
+            <option value="video">ショート動画投稿</option>
+            <option value="photo">フォトモード（画像複数）</option>
+          </select>
+        </div>
+        
+        {!data.isAuthenticated && (
+          <div className="mt-2 flex flex-col gap-2">
+            <div className="text-[10px] text-red-500 font-semibold bg-red-50 p-1.5 rounded border border-red-100 text-center">
+              未連携: TikTokアカウントが必要です
+            </div>
+            <button className="w-full bg-slate-900 hover:bg-black text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1 shadow-sm">
+              <LogIn size={14} />
+              設定から連携する
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+TiktokNode.displayName = 'TiktokNode';
 
 // --- 新規追加: カスタムノード (API由来の動的ノード) ---
 export const DynamicCustomNode = memo(({ id, data }: { id: string, data: any }) => {

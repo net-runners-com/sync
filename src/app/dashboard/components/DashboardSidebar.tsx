@@ -51,7 +51,7 @@ export function DashboardSidebar() {
         </Link>
         <Link href="/dashboard/marketplace" className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
           <Globe size={18} />
-          テンプレートギャラリー
+          テンプレート
         </Link>
         <Link href="/dashboard/ai-test" className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
           <Zap size={18} />

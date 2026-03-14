@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Twitter, Instagram, Facebook, Link as LinkIcon, CheckCircle2, AlertCircle, Loader2, LogOut } from "lucide-react";
+import { Twitter, Instagram, Facebook, Link as LinkIcon, CheckCircle2, AlertCircle, Loader2, LogOut, Sun, Moon, Monitor } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { useTheme } from "@/lib/ThemeContext";
 
 interface SocialAccountStatus {
   connected: boolean;
@@ -19,6 +20,7 @@ interface SocialAccounts {
 }
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme();
   const [socialAccounts, setSocialAccounts] = useState<SocialAccounts>({});
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
@@ -113,6 +115,34 @@ export default function SettingsPage() {
             <code className="bg-amber-100 px-1 rounded mx-1">FACEBOOK_CLIENT_SECRET</code>
             を<code className="bg-amber-100 px-1 rounded">.env</code>ファイルに設定してください。
             コールバックURL: <code className="bg-amber-100 px-1 rounded text-xs">http://localhost:3000/api/auth/callback/facebook</code>
+          </div>
+        </div>
+
+        {/* テーマ設定 */}
+        <div className="bg-white border flex-shrink-0 border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="font-bold text-slate-900 mb-4">テーマ設定</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button 
+              onClick={() => setTheme("light")}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'light' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+            >
+              <Sun size={24} className="mb-2" />
+              <span className="text-sm font-semibold">ライト</span>
+            </button>
+            <button 
+              onClick={() => setTheme("dark")}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+            >
+              <Moon size={24} className="mb-2" />
+              <span className="text-sm font-semibold">ダーク</span>
+            </button>
+            <button 
+              onClick={() => setTheme("system")}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === 'system' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+            >
+              <Monitor size={24} className="mb-2" />
+              <span className="text-sm font-semibold">システム</span>
+            </button>
           </div>
         </div>
 
