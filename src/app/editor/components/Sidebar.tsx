@@ -55,13 +55,13 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-72 border-r bg-white p-4 flex flex-col shadow-sm z-10 overflow-y-auto">
+    <aside className="w-72 border-r bg-white dark:bg-slate-950 p-4 border-slate-200 dark:border-slate-800 flex flex-col shadow-sm z-10 overflow-y-auto">
       <div className="flex items-center gap-2.5 mb-8 px-2">
         <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-md">
           S
         </div>
         <div>
-          <span className="font-bold text-lg text-slate-800 block leading-tight">Sync</span>
+          <span className="font-bold text-lg text-slate-800 dark:text-slate-100 block leading-tight">Sync</span>
           <span className="text-[10px] text-slate-400">ワークフローエディタ</span>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function Sidebar() {
             <div className="grid gap-1.5">
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'triggerNode', 'スケジュール')}
               >
@@ -89,7 +89,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'triggerNode', 'WebHook受信')}
               >
@@ -98,7 +98,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-blue-300 hover:bg-blue-50 hover:border-blue-500 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-blue-300 hover:bg-blue-50 hover:border-blue-500 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'calendarNode', 'Google Calendar')}
               >
@@ -122,7 +122,7 @@ export default function Sidebar() {
             <div className="grid gap-1.5">
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-purple-200 hover:bg-purple-50 hover:border-purple-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-purple-200 hover:bg-purple-50 hover:border-purple-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'textAiNode', 'テキスト生成')}
               >
@@ -131,7 +131,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-indigo-200 hover:bg-indigo-50 hover:border-indigo-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-indigo-200 hover:bg-indigo-50 hover:border-indigo-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'postGenNode', '投稿生成 AI')}
               >
@@ -140,7 +140,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-fuchsia-200 hover:bg-fuchsia-50 hover:border-fuchsia-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-fuchsia-200 hover:bg-fuchsia-50 hover:border-fuchsia-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'imageAiNode', '画像生成')}
               >
@@ -149,7 +149,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-rose-200 hover:bg-rose-50 hover:border-rose-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-rose-200 hover:bg-rose-50 hover:border-rose-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'videoAiNode', '動画生成')}
               >
@@ -158,7 +158,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-teal-200 hover:bg-teal-50 hover:border-teal-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-teal-200 hover:bg-teal-50 hover:border-teal-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'analyzerNode', '感情分析')}
               >
@@ -182,7 +182,7 @@ export default function Sidebar() {
             <div className="grid gap-1.5">
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-emerald-300 hover:bg-emerald-50 hover:border-emerald-500 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-emerald-300 hover:bg-emerald-50 hover:border-emerald-500 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'googleDocsNode', 'Google Docs')}
               >
@@ -191,7 +191,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-green-200 hover:bg-green-50 hover:border-green-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-green-200 hover:bg-green-50 hover:border-green-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'driveNode', 'Google Drive')}
               >
@@ -215,7 +215,7 @@ export default function Sidebar() {
             <div className="grid gap-1.5">
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-amber-200 hover:bg-amber-50 hover:border-amber-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-amber-200 hover:bg-amber-50 hover:border-amber-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'ifElseNode', '条件分岐')}
               >
@@ -224,7 +224,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-emerald-200 hover:bg-emerald-50 hover:border-emerald-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-emerald-200 hover:bg-emerald-50 hover:border-emerald-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'previewNode', 'AI出力プレビュー')}
               >
@@ -248,7 +248,7 @@ export default function Sidebar() {
             <div className="grid gap-1.5">
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-slate-300 hover:bg-slate-100 hover:border-slate-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-slate-300 hover:bg-slate-100 hover:border-slate-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'socialActionNode', 'Xに投稿', { platform: 'x', platformName: 'X (Twitter)' })}
               >
@@ -257,7 +257,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-pink-200 hover:bg-pink-50 hover:border-pink-400 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-pink-200 hover:bg-pink-50 hover:border-pink-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'socialActionNode', 'Instagramに投稿', { platform: 'instagram', platformName: 'Instagram' })}
               >
@@ -266,7 +266,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-blue-300 hover:bg-blue-50 hover:border-blue-500 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-blue-300 hover:bg-blue-50 hover:border-blue-500 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'socialActionNode', 'Facebookに投稿', { platform: 'facebook', platformName: 'Facebook' })}
               >
@@ -275,7 +275,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-emerald-300 hover:bg-emerald-50 hover:border-emerald-500 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-emerald-300 hover:bg-emerald-50 hover:border-emerald-500 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'noteNode', 'noteに投稿')}
               >
@@ -284,7 +284,7 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
-                className="justify-start gap-2 shadow-sm cursor-grab border-slate-800 hover:bg-slate-100 hover:border-slate-900 transition-all text-sm h-9"
+                className="justify-start gap-2 shadow-sm cursor-grab border-slate-800 hover:bg-slate-100 hover:border-slate-900 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'tiktokNode', 'TikTokに投稿')}
               >
@@ -317,7 +317,7 @@ export default function Sidebar() {
                     <Button 
                       key={node.id}
                       variant="outline" 
-                      className="justify-start gap-2 shadow-sm cursor-grab border-purple-200 hover:bg-purple-50 hover:border-purple-400 transition-all text-sm h-9"
+                      className="justify-start gap-2 shadow-sm cursor-grab border-purple-200 hover:bg-purple-50 hover:border-purple-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                       draggable
                       onDragStart={(e) => onDragStart(e, 'dynamicCustomNode', node.name, { customNodeId: node.id, config: node.config })}
                     >

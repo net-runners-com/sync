@@ -180,12 +180,12 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <p className="text-sm text-slate-500 mt-1">{platform.description}</p>
-                    {platform.note && (
+                    {(!platform.connected || !platform.hasToken) && platform.note && (
                       <p className="text-xs text-purple-600 mt-1 font-medium">📎 {platform.note}</p>
                     )}
-                    {platform.connected && platform.hasToken && (
+                    {platform.connected && platform.hasToken && socialAccounts[platform.id as keyof SocialAccounts]?.accountId && (
                       <p className="text-xs font-mono text-slate-500 mt-1 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 w-fit">
-                        ID: {socialAccounts.facebook?.accountId?.substring(0, 12)}...
+                        ID: {socialAccounts[platform.id as keyof SocialAccounts]?.accountId?.substring(0, 12)}...
                       </p>
                     )}
                   </div>

@@ -148,8 +148,8 @@ export default function WorkflowEditor({ initialNodes: propNodes, initialEdges: 
   );
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-50" ref={reactFlowWrapper}>
-      <div className="flex-1 w-full h-full border-t border-slate-200">
+    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-slate-950" ref={reactFlowWrapper}>
+      <div className="flex-1 w-full h-full border-t border-slate-200 dark:border-slate-700">
         <ReactFlow
           nodes={nodes}
           edges={edges}

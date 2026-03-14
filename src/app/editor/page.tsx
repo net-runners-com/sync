@@ -44,8 +44,8 @@ function EditorInner() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-4 text-slate-500">
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col items-center gap-4 text-slate-500 dark:text-slate-400">
           <Loader2 size={36} className="animate-spin text-blue-500" />
           <p className="text-sm font-medium">ワークフローを読み込み中...</p>
         </div>
@@ -54,7 +54,7 @@ function EditorInner() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden">
       <ReactFlowProvider>
         <Sidebar />
 
@@ -75,45 +75,45 @@ function EditorInner() {
 
         {isSettingsOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl w-[500px] max-w-[90vw] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                  <Settings size={18} className="text-slate-500" />
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-[500px] max-w-[90vw] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 dark:bg-slate-950/50">
+                <h2 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <Settings size={18} className="text-slate-500 dark:text-slate-400" />
                   ワークフロー設定
                 </h2>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors"
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 dark:bg-slate-800 transition-colors"
                 >
                   <X size={20} />
                 </button>
               </div>
               <div className="p-6 flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">ワークフロー名</label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">ワークフロー名</label>
                   <input
                     type="text"
                     defaultValue={initialData?.name ?? "新しいワークフロー"}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-slate-700">説明</label>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">説明</label>
                   <textarea
                     defaultValue={initialData?.description ?? ""}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm resize-none h-24"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm resize-none h-24"
                   />
                 </div>
                 <div className="flex items-center gap-3 pt-2">
-                  <label className="text-sm font-semibold text-slate-700">ステータス</label>
-                  <select className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">ステータス</label>
+                  <select className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 cursor-pointer">
                     <option value="active">🟢 Active (有効)</option>
                     <option value="draft">⚪ Draft (下書き)</option>
                     <option value="paused">🟡 Paused (一時停止)</option>
                   </select>
                 </div>
               </div>
-              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 dark:bg-slate-950 flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setIsSettingsOpen(false)}>
                   キャンセル
                 </Button>
@@ -134,7 +134,7 @@ export default function EditorPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+        <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
           <Loader2 size={36} className="animate-spin text-blue-500" />
         </div>
       }

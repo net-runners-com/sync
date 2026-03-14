@@ -87,10 +87,10 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
   };
 
   return (
-    <header className="h-14 border-b bg-white flex items-center justify-between px-4 md:px-6 shadow-sm z-10 w-full">
+    <header className="h-14 border-b bg-white dark:bg-slate-900 flex items-center justify-between px-4 md:px-6 shadow-sm z-10 w-full">
       <div className="flex items-center gap-2 md:gap-4">
         <Link href="/dashboard" className="hidden md:block">
-          <Button variant="ghost" size="sm" className="gap-2 text-slate-500 hover:text-slate-800">
+          <Button variant="ghost" size="sm" className="gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-100">
             <LayoutDashboard size={16} />
             ダッシュボード
           </Button>
@@ -102,7 +102,7 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
             type="text"
             value={workflowName}
             onChange={(e) => setWorkflowName(e.target.value)}
-            className="font-medium text-slate-800 bg-transparent border border-transparent hover:border-slate-200 hover:bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none rounded px-2 py-1 transition-colors w-[150px] md:w-[250px]"
+            className="font-medium text-slate-800 dark:text-slate-100 bg-transparent border border-transparent hover:border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:bg-slate-950 focus:border-blue-500 focus:bg-white dark:bg-slate-900 focus:outline-none rounded px-2 py-1 transition-colors w-[150px] md:w-[250px]"
             placeholder="ワークフロー名"
           />
           <Edit2 size={12} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 pointer-events-none" />
@@ -147,23 +147,23 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
         {session ? (
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-end">
-              <span className="text-xs font-bold text-slate-800">{session.user?.name || "ユーザー"}</span>
-              <span className="text-[10px] text-slate-500">{session.user?.email || ""}</span>
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100">{session.user?.name || "ユーザー"}</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">{session.user?.email || ""}</span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-blue-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-blue-100 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center">
               {session.user?.image ? (
                 <Image src={session.user.image} alt="Profile" width={32} height={32} />
               ) : (
                 <User size={16} className="text-blue-600" />
               )}
             </div>
-            <Button variant="ghost" size="sm" className="text-slate-500 hover:text-red-600 hover:bg-red-50" onClick={() => signOut()}>
+            <Button variant="ghost" size="sm" className="text-slate-500 dark:text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={() => signOut()}>
               <LogOut size={16} />
             </Button>
           </div>
         ) : (
           <Link href="/login">
-            <Button size="sm" variant="outline" className="gap-2 border-slate-300 text-slate-700 bg-white hover:bg-slate-50 shadow-sm">
+            <Button size="sm" variant="outline" className="gap-2 border-slate-300 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-950 shadow-sm">
               <LogIn size={16} />
               ログイン
             </Button>

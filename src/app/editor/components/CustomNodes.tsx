@@ -23,7 +23,7 @@ const NodeHeader = ({ icon: Icon, title, gradient, nodeId }: { icon: any, title:
       </div>
       <button
         onClick={onDelete}
-        className="text-white/70 hover:text-white hover:bg-white/20 p-1 rounded transition-colors"
+        className="text-white/70 hover:text-white hover:bg-white dark:bg-slate-900/20 p-1 rounded transition-colors"
         title="ノードを削除"
       >
         <Trash2 size={14} />
@@ -35,10 +35,10 @@ const NodeHeader = ({ icon: Icon, title, gradient, nodeId }: { icon: any, title:
 // --- トリガーノード ---
 export const TriggerNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-blue-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-blue-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <NodeHeader icon={Clock} title="トリガー" gradient="from-blue-500 to-blue-600" nodeId={id} />
       <div className="p-4 flex flex-col gap-2">
-        <div className="text-sm font-medium text-slate-700">{data.label || '毎日 12:00'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || '毎日 12:00'}</div>
         <div className="text-xs text-slate-400">Cron: 0 12 * * *</div>
       </div>
       <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-blue-500 !border-2 !border-white" />
@@ -78,12 +78,12 @@ export const TextAiNode = memo(({ id, data }: { id: string, data: any }) => {
   };
 
   return (
-    <div className="bg-white border-2 border-purple-500 rounded-xl shadow-lg min-w-[300px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-purple-500 rounded-xl shadow-lg min-w-[300px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-purple-400 !border-2 !border-white" />
       <NodeHeader icon={MessageSquare} title="テキスト生成 AI" gradient="from-purple-500 to-purple-600" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">モデル (OpenRouter)</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">モデル (OpenRouter)</label>
           <select
             className="w-full text-xs p-1.5 border border-purple-200 rounded-md bg-purple-50 text-purple-700 focus:outline-none focus:border-purple-500 cursor-pointer font-medium"
             value={model}
@@ -99,17 +99,17 @@ export const TextAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <label className="text-[10px] text-slate-500 font-semibold uppercase">プロンプト</label>
-            <div className="flex bg-slate-100 p-0.5 rounded-md">
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">プロンプト</label>
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md">
               <button
                 onClick={() => setPromptMode('text')}
-                className={`text-[9px] px-2 py-0.5 rounded-sm font-bold transition-colors ${promptMode === 'text' ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`text-[9px] px-2 py-0.5 rounded-sm font-bold transition-colors ${promptMode === 'text' ? 'bg-white dark:bg-slate-900 text-purple-700 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200'}`}
               >
                 TEXT
               </button>
               <button
                 onClick={() => setPromptMode('json')}
-                className={`text-[9px] px-2 py-0.5 rounded-sm font-bold transition-colors ${promptMode === 'json' ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`text-[9px] px-2 py-0.5 rounded-sm font-bold transition-colors ${promptMode === 'json' ? 'bg-white dark:bg-slate-900 text-purple-700 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:text-slate-200'}`}
               >
                 JSON
               </button>
@@ -118,14 +118,14 @@ export const TextAiNode = memo(({ id, data }: { id: string, data: any }) => {
           {promptMode === 'text' ? (
             <textarea
               placeholder="AIへの指示を具体的に入力..."
-              className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-purple-500 resize-none h-20"
+              className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-purple-500 resize-none h-20"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
           ) : (
             <textarea
               placeholder='{"key": "value"}'
-              className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-purple-500 resize-none h-20 font-mono bg-slate-50"
+              className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-purple-500 resize-none h-20 font-mono bg-slate-50 dark:bg-slate-950"
               value={jsonPrompt}
               onChange={(e) => setJsonPrompt(e.target.value)}
             />
@@ -141,7 +141,7 @@ export const TextAiNode = memo(({ id, data }: { id: string, data: any }) => {
           ) : '▶ この場でテスト実行'}
         </button>
         {output && (
-          <div className="bg-purple-50 border border-purple-200 rounded-md p-2 text-[11px] text-slate-700 max-h-32 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+          <div className="bg-purple-50 border border-purple-200 rounded-md p-2 text-[11px] text-slate-700 dark:text-slate-200 max-h-32 overflow-y-auto whitespace-pre-wrap leading-relaxed">
             {output}
           </div>
         )}
@@ -156,11 +156,11 @@ TextAiNode.displayName = 'TextAiNode';
 // --- AI処理ノード: 画像生成 ---
 export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-fuchsia-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-fuchsia-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-fuchsia-400 !border-2 !border-white" />
       <NodeHeader icon={ImageIcon} title="画像生成 AI" gradient="from-fuchsia-500 to-pink-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || 'DALL-E 3 生成'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'DALL-E 3 生成'}</div>
 
         <div className="border-2 border-dashed border-fuchsia-200 rounded-md p-3 flex flex-col items-center justify-center gap-2 bg-fuchsia-50/50 cursor-pointer hover:bg-fuchsia-50 transition-colors">
           <Upload size={16} className="text-fuchsia-400" />
@@ -170,7 +170,7 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
 
         <div className="flex flex-col gap-1 mt-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">モデル</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">モデル</label>
           <select
             className="w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-fuchsia-50 text-fuchsia-700 focus:outline-none focus:border-fuchsia-400 cursor-pointer font-medium"
             defaultValue={data.model || 'dall-e-3'}
@@ -182,9 +182,9 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
           </select>
         </div>
         <div className="flex flex-col gap-1 mt-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">サイズ</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">サイズ</label>
           <select
-            className="w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-white text-slate-700 focus:outline-none focus:border-fuchsia-400 cursor-pointer"
+            className="w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-fuchsia-400 cursor-pointer"
             defaultValue={data.size || '1024x1024'}
             onChange={(e) => {}}
           >
@@ -194,10 +194,10 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
           </select>
         </div>
         <div className="flex flex-col gap-1 mt-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">カスタムプロンプト</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">カスタムプロンプト</label>
           <textarea
             placeholder="画像の詳細な作成指示を入力..."
-            className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-fuchsia-500 resize-none h-16"
+            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-fuchsia-500 resize-none h-16"
             defaultValue={data.customPrompt || ''}
           />
         </div>
@@ -211,11 +211,11 @@ ImageAiNode.displayName = 'ImageAiNode';
 // --- AI処理ノード: 動画生成 ---
 export const VideoAiNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-rose-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-rose-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-rose-400 !border-2 !border-white" />
       <NodeHeader icon={Video} title="動画生成 AI" gradient="from-rose-500 to-orange-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || 'Runway Gen-3'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'Runway Gen-3'}</div>
 
         <div className="border-2 border-dashed border-rose-200 rounded-md p-3 flex flex-col items-center justify-center gap-2 bg-rose-50/50 cursor-pointer hover:bg-rose-50 transition-colors">
           <Upload size={16} className="text-rose-400" />
@@ -225,7 +225,7 @@ export const VideoAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
 
         <div className="flex flex-col gap-1 mt-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">エンジン</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">エンジン</label>
           <select
             className="w-full text-xs p-1.5 border border-rose-200 rounded-md bg-rose-50 text-rose-700 focus:outline-none focus:border-rose-400 cursor-pointer font-medium"
             defaultValue={data.engine || 'runway-gen3'}
@@ -237,10 +237,10 @@ export const VideoAiNode = memo(({ id, data }: { id: string, data: any }) => {
           </select>
         </div>
         <div className="flex flex-col gap-1 mt-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">カスタムプロンプト</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">カスタムプロンプト</label>
           <textarea
             placeholder="カメラワークや被写体の動きを入力..."
-            className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-rose-500 resize-none h-16"
+            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-rose-500 resize-none h-16"
             defaultValue={data.customPrompt || ''}
           />
         </div>
@@ -254,19 +254,19 @@ VideoAiNode.displayName = 'VideoAiNode';
 // --- 分析ノード ---
 export const AnalyzerNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-teal-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-teal-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-teal-400 !border-2 !border-white" />
       <NodeHeader icon={BarChart3} title="インサイト分析" gradient="from-teal-500 to-emerald-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || '感情・競合分析'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || '感情・競合分析'}</div>
 
         {/* URL / ユーザーID 入力UI */}
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">ターゲット (ユーザーID等)</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ターゲット (ユーザーID等)</label>
           <input
             type="text"
             placeholder="@elonmusk, #topic"
-            className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-teal-500"
+            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-teal-500"
             defaultValue={data.target || ''}
             onChange={(e) => {
                // ここは簡易モック。本来は onNodesChange等を使って状態管理します
@@ -287,11 +287,11 @@ AnalyzerNode.displayName = 'AnalyzerNode';
 // --- 条件分岐ノード (If/Else) ---
 export const IfElseNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-amber-500 rounded-xl shadow-lg min-w-[280px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-amber-500 rounded-xl shadow-lg min-w-[280px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-amber-400 !border-2 !border-white" />
       <NodeHeader icon={GitBranch} title="条件分岐 (If/Else)" gradient="from-amber-500 to-yellow-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || '条件を設定'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || '条件を設定'}</div>
         <div className="bg-amber-50 p-2 rounded-md text-xs text-amber-800 border border-amber-200 font-mono">
           {data.condition || 'score > 0.7'}
         </div>
@@ -332,8 +332,8 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
         const res = await fetch('/api/user/social-accounts');
         if (res.ok) {
           const d = await res.json();
-          // Instagram も Facebook トークンで認証するため facebook を確認
-          const providerKey = data.platform === 'instagram' ? 'facebook' : data.platform;
+          // Instagram は facebook で判定、 X (Twitter) は twitter で判定
+          const providerKey = data.platform === 'instagram' ? 'facebook' : data.platform === 'x' ? 'twitter' : data.platform;
           setIsConnected(d.accounts?.[providerKey]?.hasToken ?? false);
         }
       } catch {}
@@ -371,16 +371,16 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
 
   return (
     <>
-      <div className={`bg-white border-2 ${getBorderColor()} rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl`}>
+      <div className={`bg-white dark:bg-slate-900 border-2 ${getBorderColor()} rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl`}>
         <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-slate-400 !border-2 !border-white" />
         <NodeHeader icon={getIcon()} title={`SNS投稿: ${data.platformName || 'X (Twitter)'}`} gradient={getGradient()} nodeId={id} />
         <div className="p-4 flex flex-col gap-3">
-          <div className="text-sm font-medium text-slate-700">{data.label || 'テキストと画像を投稿'}</div>
+          <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'テキストと画像を投稿'}</div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-semibold uppercase">投稿タイプ</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">投稿タイプ</label>
             <select
-              className={`w-full text-xs p-1.5 border ${getBorderColor()} rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50`}
+              className={`w-full text-xs p-1.5 border ${getBorderColor()} rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50 dark:bg-slate-950`}
               defaultValue={data.postType || 'feed'}
               onChange={(e) => {}}
             >
@@ -412,8 +412,8 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
           {checkingAuth ? (
             <div className="mt-1 text-center text-xs text-slate-400 py-2">確認中...</div>
           ) : (
-            <div className="mt-3 flex items-center justify-between text-xs border border-slate-200 rounded p-2 bg-slate-50">
-              <span className="text-slate-500 flex items-center gap-1">
+            <div className="mt-3 flex items-center justify-between text-xs border border-slate-200 dark:border-slate-700 rounded p-2 bg-slate-50 dark:bg-slate-950">
+              <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
                 <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-400"}`}></span>
                 {isConnected ? "連携済み" : "未連携"}
               </span>
@@ -440,7 +440,7 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
           }}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl w-[400px] overflow-hidden flex flex-col animate-in fade-in zoom-in-95"
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-[400px] overflow-hidden flex flex-col animate-in fade-in zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
             <div className={`px-4 py-3 flex items-center justify-between border-b border-slate-100 ${
@@ -452,25 +452,25 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
                 {React.createElement(getIcon(), { size: 16 })}
                 <span>{data.platformName || 'X (Twitter)'} プレビュー</span>
               </div>
-              <button onClick={() => setIsPreviewOpen(false)} className="hover:bg-white/20 p-1 rounded transition-colors">
+              <button onClick={() => setIsPreviewOpen(false)} className="hover:bg-white dark:bg-slate-900/20 p-1 rounded transition-colors">
                 <XIcon size={18} />
               </button>
             </div>
 
-            <div className="p-5 bg-slate-50">
+            <div className="p-5 bg-slate-50 dark:bg-slate-950">
               {/* モックプレビュー画面 */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">👤</div>
                   <div>
                     <div className="font-bold text-sm text-slate-900">Sync Bot</div>
-                    <div className="text-xs text-slate-500">@sync_ai · 10分前</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">@sync_ai · 10分前</div>
                   </div>
                 </div>
-                <div className="text-sm text-slate-800 mb-3 whitespace-pre-wrap">
+                <div className="text-sm text-slate-800 dark:text-slate-100 mb-3 whitespace-pre-wrap">
                   AIが自動生成した【サンプルテキスト】です！✨\n\n最新のトレンドに合わせて文章と画像を生成し、最適なタイミングで各プラットフォームへ投稿します。
                 </div>
-                <div className="w-full h-40 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 text-xs">
+                <div className="w-full h-40 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 text-xs">
                   [ Generated Image / Video Placeholder ]
                 </div>
               </div>
@@ -486,13 +486,13 @@ SocialActionNode.displayName = 'SocialActionNode';
 // --- 新規追加: 投稿生成AIノード ---
 export const PostGenerationAiNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-indigo-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-indigo-400 !border-2 !border-white" />
       <NodeHeader icon={PenTool} title="投稿生成 AI" gradient="from-indigo-500 to-indigo-600" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || 'ターゲット層向けに投稿作成'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'ターゲット層向けに投稿作成'}</div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">ターゲットSNS</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ターゲットSNS</label>
           <select
             className="w-full text-xs p-1.5 border border-indigo-200 rounded-md bg-indigo-50 text-indigo-700 focus:outline-none focus:border-indigo-400 cursor-pointer font-medium"
             defaultValue={data.targetPlatform || 'instagram'}
@@ -506,7 +506,7 @@ export const PostGenerationAiNode = memo(({ id, data }: { id: string, data: any 
         </div>
         <textarea
           placeholder="口調やフォーマットの指示（例：絵文字多め、Z世代風）"
-          className="w-full text-xs p-2 border border-slate-200 rounded-md mt-1 focus:outline-none focus:border-indigo-500 resize-none h-16"
+          className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md mt-1 focus:outline-none focus:border-indigo-500 resize-none h-16"
           defaultValue={data.promptStyle || ''}
         />
       </div>
@@ -518,17 +518,17 @@ PostGenerationAiNode.displayName = 'PostGenerationAiNode';
 // --- AI出力プレビューノード ---
 export const PreviewNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-emerald-500 rounded-xl shadow-lg min-w-[280px] max-w-[320px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-emerald-500 rounded-xl shadow-lg min-w-[280px] max-w-[320px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-white" />
       <NodeHeader icon={ImageIcon} title="AI出力プレビュー" gradient="from-emerald-500 to-teal-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || '生成結果の確認'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || '生成結果の確認'}</div>
 
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 min-h-[120px] flex flex-col items-center justify-center text-slate-400 text-xs text-center break-words">
+        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg p-3 min-h-[120px] flex flex-col items-center justify-center text-slate-400 text-xs text-center break-words">
           {data.previewContent ? (
             <div className="w-full text-left flex flex-col gap-2">
               <div className="flex justify-between items-center px-1">
-                <span className="text-[10px] text-slate-500 font-semibold">生成テキスト</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">生成テキスト</span>
                 <button
                   onClick={() => {}}
                   className="text-[10px] text-blue-500 hover:text-blue-600 font-medium px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50"
@@ -537,7 +537,7 @@ export const PreviewNode = memo(({ id, data }: { id: string, data: any }) => {
                 </button>
               </div>
               <textarea
-                className="w-full text-sm text-slate-700 bg-white border border-slate-200 rounded p-2 focus:outline-none focus:border-emerald-500 resize-y min-h-[100px]"
+                className="w-full text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-2 focus:outline-none focus:border-emerald-500 resize-y min-h-[100px]"
                 defaultValue={data.previewContent}
                 onChange={(e) => {}}
               />
@@ -578,16 +578,16 @@ export const DriveNode = memo(({ id, data }: { id: string, data: any }) => {
   }, []);
 
   return (
-    <div className="bg-white border-2 border-green-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-green-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-green-400 !border-2 !border-white" />
       <NodeHeader icon={Database} title="Google Drive/Sheets" gradient="from-green-500 to-emerald-600" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || 'データを保存・取得'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'データを保存・取得'}</div>
         {checkingAuth ? (
           <div className="mt-1 text-center text-xs text-slate-400 py-2">確認中...</div>
         ) : (
-          <div className="mt-3 flex items-center justify-between text-xs border border-slate-200 rounded p-2 bg-slate-50">
-            <span className="text-slate-500 flex items-center gap-1">
+          <div className="mt-3 flex items-center justify-between text-xs border border-slate-200 dark:border-slate-700 rounded p-2 bg-slate-50 dark:bg-slate-950">
+            <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
               <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-400"}`}></span>
               {isConnected ? "連携済み" : "未連携"}
             </span>
@@ -602,7 +602,7 @@ export const DriveNode = memo(({ id, data }: { id: string, data: any }) => {
           </div>
         )}
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">アクション</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">アクション</label>
           <select
             className="w-full text-xs p-1.5 border border-green-200 rounded-md bg-green-50 text-green-700 focus:outline-none focus:border-green-400 cursor-pointer font-medium"
             defaultValue={data.action || 'read-sheet'}
@@ -614,11 +614,11 @@ export const DriveNode = memo(({ id, data }: { id: string, data: any }) => {
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">ファイルURL / ID</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ファイルURL / ID</label>
           <input 
             type="text" 
             placeholder="https://docs.google.com/..." 
-            className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-green-500"
+            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-green-500"
             defaultValue={data.fileUrl || ''}
           />
         </div>
@@ -644,12 +644,12 @@ DriveNode.displayName = 'DriveNode';
 // --- 新規追加: Google Calendarトリガーノード ---
 export const GoogleCalendarNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-blue-400 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-blue-400 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <NodeHeader icon={Calendar} title="Google Calendar" gradient="from-blue-400 to-indigo-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || '指定イベントで実行開始'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || '指定イベントで実行開始'}</div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">フックするイベント条件</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">フックするイベント条件</label>
           <select 
             className="w-full text-xs p-1.5 border border-blue-200 rounded-md bg-blue-50 text-blue-700 focus:outline-none focus:border-blue-400 cursor-pointer font-medium"
             defaultValue={data.eventTrigger || 'event-start'}
@@ -661,11 +661,11 @@ export const GoogleCalendarNode = memo(({ id, data }: { id: string, data: any })
           </select>
         </div>
         <div className="flex flex-col gap-1 mt-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">カレンダー / キーワード指定</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">カレンダー / キーワード指定</label>
           <input 
             type="text" 
             placeholder="例: 会議, #sns, 重要な予定" 
-            className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
+            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-blue-400"
             defaultValue={data.keyword || ''}
           />
         </div>
@@ -692,13 +692,13 @@ GoogleCalendarNode.displayName = 'GoogleCalendarNode';
 // --- 新規追加: Google Docsノード ---
 export const GoogleDocsNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-emerald-400 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-emerald-400 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-white" />
       <NodeHeader icon={FileText} title="Google Docs" gradient="from-emerald-400 to-teal-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || 'ドキュメント操作'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'ドキュメント操作'}</div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">アクション</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">アクション</label>
           <select 
             className="w-full text-xs p-1.5 border border-emerald-200 rounded-md bg-emerald-50 text-emerald-700 focus:outline-none focus:border-emerald-400 cursor-pointer font-medium"
             defaultValue={data.action || 'create-doc'}
@@ -708,11 +708,11 @@ export const GoogleDocsNode = memo(({ id, data }: { id: string, data: any }) => 
           </select>
         </div>
         <div className="flex flex-col gap-1 mt-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">ドキュメントURL / ID</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ドキュメントURL / ID</label>
           <input 
             type="text" 
             placeholder="新規作成時は空欄" 
-            className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-emerald-400"
+            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-emerald-400"
             defaultValue={data.fileUrl || ''}
           />
         </div>
@@ -737,36 +737,36 @@ GoogleDocsNode.displayName = 'GoogleDocsNode';
 // --- 新規追加: noteノード ---
 export const NoteNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-emerald-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl relative">
+    <div className="bg-white dark:bg-slate-900 border-2 border-emerald-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl relative">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-white" />
       <NodeHeader icon={FileText} title="noteに投稿" gradient="from-emerald-500 to-green-600" nodeId={id} />
       <div className="absolute top-2 right-10 bg-slate-800 text-white text-[8px] px-1.5 py-0.5 rounded font-bold shadow-sm">
         Coming Soon
       </div>
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || 'note記事作成'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'note記事作成'}</div>
         <div className="opacity-70">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-semibold uppercase">タイトル</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">タイトル</label>
             <input 
               type="text" 
               placeholder="生成されたタイトル" 
-              className="w-full text-xs p-2 border border-slate-200 rounded-md cursor-not-allowed bg-slate-50"
+              className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed bg-slate-50 dark:bg-slate-950"
               disabled
             />
           </div>
           <div className="flex flex-col gap-1 mt-1">
-            <label className="text-[10px] text-slate-500 font-semibold uppercase">ハッシュタグ</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ハッシュタグ</label>
             <input 
               type="text" 
               placeholder="#note #AI" 
-              className="w-full text-xs p-2 border border-slate-200 rounded-md cursor-not-allowed bg-slate-50"
+              className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed bg-slate-50 dark:bg-slate-950"
               disabled
             />
           </div>
         </div>
         <div className="mt-1 flex flex-col gap-2">
-          <div className="text-[10px] text-slate-500 font-semibold bg-slate-100 p-1.5 rounded border border-slate-200 text-center">
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold bg-slate-100 dark:bg-slate-800 p-1.5 rounded border border-slate-200 dark:border-slate-700 text-center">
             公式APIが未公開のため、準備中です
           </div>
         </div>
@@ -779,16 +779,16 @@ NoteNode.displayName = 'NoteNode';
 // --- 新規追加: TikTokノード ---
 export const TiktokNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
-    <div className="bg-white border-2 border-slate-900 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl relative">
+    <div className="bg-white dark:bg-slate-900 border-2 border-slate-900 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl relative">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-slate-400 !border-2 !border-white" />
       <NodeHeader icon={Music} title="TikTokに投稿" gradient="from-slate-800 to-slate-900" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700">{data.label || 'ショート動画を投稿'}</div>
+        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'ショート動画を投稿'}</div>
         
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] text-slate-500 font-semibold uppercase">投稿タイプ</label>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">投稿タイプ</label>
           <select 
-            className="w-full text-xs p-1.5 border border-slate-200 rounded-md bg-white text-slate-700 focus:outline-none cursor-pointer font-medium"
+            className="w-full text-xs p-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer font-medium"
             defaultValue={data.postType || 'video'}
           >
             <option value="video">ショート動画投稿</option>
@@ -863,7 +863,7 @@ export const DynamicCustomNode = memo(({ id, data }: { id: string, data: any }) 
   };
 
   return (
-    <div className="bg-white border-2 border-purple-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
+    <div className="bg-white dark:bg-slate-900 border-2 border-purple-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-purple-400 !border-2 !border-white" />
       <NodeHeader icon={IconComponent} title={data.label || 'カスタムノード'} gradient="from-purple-400 to-purple-600" nodeId={id} />
       
@@ -871,7 +871,7 @@ export const DynamicCustomNode = memo(({ id, data }: { id: string, data: any }) 
         {/* 入力フォーム群の構築 */}
         {inputs.length > 0 && (
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] text-slate-500 font-semibold uppercase">入力パラメータ</label>
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">入力パラメータ</label>
             {inputs.map((input: any) => (
               <input
                 key={input.id}
@@ -879,7 +879,7 @@ export const DynamicCustomNode = memo(({ id, data }: { id: string, data: any }) 
                 placeholder={`${input.name} を入力`}
                 value={inputValues[input.id] || ''}
                 onChange={(e) => setInputValues({ ...inputValues, [input.id]: e.target.value })}
-                className="w-full text-xs p-2 border border-slate-200 rounded-md bg-white focus:outline-none focus:border-purple-400"
+                className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 focus:outline-none focus:border-purple-400"
               />
             ))}
           </div>
@@ -896,12 +896,12 @@ export const DynamicCustomNode = memo(({ id, data }: { id: string, data: any }) 
 
         {/* 出力結果の表示 */}
         {output && (
-          <div className="mt-2 bg-slate-50 border border-slate-200 rounded-md p-2.5">
+          <div className="mt-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-md p-2.5">
             <div className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider flex justify-between items-center">
               <span>{outputs[0]?.name || '出力結果'}</span>
-              <span className="bg-white px-1 border border-slate-200 rounded text-[9px]">Text</span>
+              <span className="bg-white dark:bg-slate-900 px-1 border border-slate-200 dark:border-slate-700 rounded text-[9px]">Text</span>
             </div>
-            <div className="text-xs text-slate-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
+            <div className="text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap max-h-32 overflow-y-auto">
               {output}
             </div>
           </div>
