@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { Twitter, Instagram, Facebook, Link as LinkIcon, CheckCircle2, AlertCircle, Loader2, LogOut, Sun, Moon, Monitor } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useTheme } from "@/lib/ThemeContext";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface SocialAccountStatus {
   connected: boolean;
@@ -151,10 +150,9 @@ export default function SettingsPage() {
         {/* SNS連携リスト */}
         <div className="flex flex-col gap-4">
           {loading ? (
-            <div className="flex flex-col gap-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-28 w-full rounded-2xl bg-slate-200/60" />
-              ))}
+            <div className="flex items-center justify-center py-12 text-slate-400">
+              <Loader2 className="animate-spin mr-2" size={24} />
+              <span>連携状況を確認中...</span>
             </div>
           ) : (
             platforms.map((platform, index) => (
