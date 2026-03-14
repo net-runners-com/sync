@@ -22,9 +22,33 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.TWITTER_CLIENT_SECRET || "",
       version: "2.0",
       authorization: {
+        url: "https://twitter.com/i/oauth2/authorize",
         params: {
           scope: "tweet.read tweet.write users.read offline.access",
+          response_type: "code",
         },
+      },
+      token: {
+        url: "https://api.twitter.com/2/oauth2/token",
+      },
+      userinfo: {
+        url: "https://api.twitter.com/2/users/me",
+        params: { "user.fields": "id,name,profile_image_url,username" },
+        request: async ({ provider, tokens }: any) => {
+          const res = await fetch("https://api.twitter.com/2/users/me?user.fields=id,name,profile_image_url,username", {
+            headers: { Authorization: `Bearer ${tokens.access_token}` },
+          });
+          const { data } = await res.json();
+          return data;
+        },
+      },
+      profile(profile: any) {
+        return {
+          id: profile.id,
+          name: profile.name,
+          image: profile.profile_image_url,
+          email: profile.email ?? null,
+        };
       },
     }),
     FacebookProvider({
