@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useTheme } from "@/lib/ThemeContext";
 import { 
   BarChart3, Twitter, Facebook, Instagram, Loader2, AlertCircle, Share2, MoreVertical, RotateCcw
 } from "lucide-react";
@@ -52,6 +53,7 @@ const Sparkline = ({ data, color }: { data: number[], color: string }) => {
 };
 
 export default function AnalyticsPage() {
+  const { theme } = useTheme();
   const [data, setData] = useState<PlatformData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -282,7 +284,7 @@ export default function AnalyticsPage() {
                         axisLine={false}
                       />
                       <RechartsTooltip 
-                        contentStyle={{ backgroundColor: '#1D212F', borderColor: '#3A4056', borderRadius: '8px', color: '#fff' }}
+                        contentStyle={{ backgroundColor: theme === 'dark' ? '#0f172a' : '#ffffff', borderColor: theme === 'dark' ? '#1e293b' : '#e2e8f0', borderRadius: '8px', color: theme === 'dark' ? '#f8fafc' : '#0f172a' }}
                         itemStyle={{ color: '#E2E8F0', fontSize: '12px' }}
                         labelStyle={{ color: '#94A3B8', marginBottom: '4px', fontSize: '12px' }}
                       />
@@ -315,7 +317,7 @@ export default function AnalyticsPage() {
                           textAnchor="end"
                         />
                         <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
-                        <RechartsTooltip contentStyle={{ backgroundColor: '#1D212F', borderColor: '#3A4056', borderRadius: '8px' }} />
+                        <RechartsTooltip contentStyle={{ backgroundColor: theme === 'dark' ? '#0f172a' : '#ffffff', borderColor: theme === 'dark' ? '#1e293b' : '#e2e8f0', borderRadius: '8px', color: theme === 'dark' ? '#f8fafc' : '#0f172a' }} />
                         <Line type="linear" dataKey="posts" stroke="#FF4E42" strokeWidth={2} dot={{ r: 3, fill: '#FF4E42', strokeWidth: 0 }} />
                       </LineChart>
                     </ResponsiveContainer>
@@ -346,7 +348,7 @@ export default function AnalyticsPage() {
                         />
                         <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} />
                         <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#1D212F', borderColor: '#3A4056', borderRadius: '8px' }}
+                          contentStyle={{ backgroundColor: theme === 'dark' ? '#0f172a' : '#ffffff', borderColor: theme === 'dark' ? '#1e293b' : '#e2e8f0', borderRadius: '8px', color: theme === 'dark' ? '#f8fafc' : '#0f172a' }}
                           itemStyle={{ fontSize: '11px' }}
                         />
                         <Bar dataKey="likes" stackId="a" fill="#FF4E42" name="いいね数" />

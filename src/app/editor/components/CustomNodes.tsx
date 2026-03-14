@@ -86,8 +86,7 @@ export const TextAiNode = memo(({ id, data }: { id: string, data: any }) => {
       <div className="p-4 flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">モデル (OpenRouter)</label>
-          <select
-            className="w-full text-xs p-1.5 border border-purple-200 rounded-md bg-purple-50 text-purple-700 focus:outline-none focus:border-purple-500 cursor-pointer font-medium"
+          <select className="nodrag w-full text-xs p-1.5 border border-purple-200 rounded-md bg-purple-50 text-purple-700 focus:outline-none focus:border-purple-500 cursor-pointer font-medium"
             value={model}
             onChange={(e) => setModel(e.target.value)}
           >
@@ -118,16 +117,14 @@ export const TextAiNode = memo(({ id, data }: { id: string, data: any }) => {
             </div>
           </div>
           {promptMode === 'text' ? (
-            <textarea
-              placeholder="AIへの指示を具体的に入力..."
-              className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-purple-500 resize-none h-20"
+            <textarea placeholder="AIへの指示を具体的に入力..."
+              className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-purple-500 resize-none h-20"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
           ) : (
-            <textarea
-              placeholder='{"key": "value"}'
-              className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-purple-500 resize-none h-20 font-mono bg-slate-50 dark:bg-slate-950"
+            <textarea placeholder='{"key": "value"}'
+              className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-purple-500 resize-none h-20 font-mono bg-slate-50 dark:bg-slate-950"
               value={jsonPrompt}
               onChange={(e) => setJsonPrompt(e.target.value)}
             />
@@ -173,8 +170,7 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
 
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">モデル</label>
-          <select
-            className="w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-fuchsia-50 text-fuchsia-700 focus:outline-none focus:border-fuchsia-400 cursor-pointer font-medium"
+          <select className="nodrag w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-fuchsia-50 text-fuchsia-700 focus:outline-none focus:border-fuchsia-400 cursor-pointer font-medium"
             defaultValue={data.model || 'dall-e-3'}
             onChange={(e) => {}}
           >
@@ -185,8 +181,7 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">サイズ</label>
-          <select
-            className="w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-fuchsia-400 cursor-pointer"
+          <select className="nodrag w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-fuchsia-400 cursor-pointer"
             defaultValue={data.size || '1024x1024'}
             onChange={(e) => {}}
           >
@@ -197,9 +192,8 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">カスタムプロンプト</label>
-          <textarea
-            placeholder="画像の詳細な作成指示を入力..."
-            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-fuchsia-500 resize-none h-16"
+          <textarea placeholder="画像の詳細な作成指示を入力..."
+            className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-fuchsia-500 resize-none h-16"
             defaultValue={data.customPrompt || ''}
           />
         </div>
@@ -228,8 +222,7 @@ export const VideoAiNode = memo(({ id, data }: { id: string, data: any }) => {
 
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">エンジン</label>
-          <select
-            className="w-full text-xs p-1.5 border border-rose-200 rounded-md bg-rose-50 text-rose-700 focus:outline-none focus:border-rose-400 cursor-pointer font-medium"
+          <select className="nodrag w-full text-xs p-1.5 border border-rose-200 rounded-md bg-rose-50 text-rose-700 focus:outline-none focus:border-rose-400 cursor-pointer font-medium"
             defaultValue={data.engine || 'runway-gen3'}
             onChange={(e) => {}}
           >
@@ -240,9 +233,8 @@ export const VideoAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">カスタムプロンプト</label>
-          <textarea
-            placeholder="カメラワークや被写体の動きを入力..."
-            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-rose-500 resize-none h-16"
+          <textarea placeholder="カメラワークや被写体の動きを入力..."
+            className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-rose-500 resize-none h-16"
             defaultValue={data.customPrompt || ''}
           />
         </div>
@@ -265,10 +257,9 @@ export const AnalyzerNode = memo(({ id, data }: { id: string, data: any }) => {
         {/* URL / ユーザーID 入力UI */}
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ターゲット (ユーザーID等)</label>
-          <input
-            type="text"
+          <input type="text"
             placeholder="@elonmusk, #topic"
-            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-teal-500"
+            className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-teal-500"
             defaultValue={data.target || ''}
             onChange={(e) => {
                // ここは簡易モック。本来は onNodesChange等を使って状態管理します
@@ -390,7 +381,7 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">投稿タイプ</label>
             <select
-              className={`w-full text-xs p-1.5 border ${getBorderColor()} rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50 dark:bg-slate-950`}
+              className={`nodrag w-full text-xs p-1.5 border ${getBorderColor()} rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50 dark:bg-slate-950`}
               defaultValue={data.postType || 'feed'}
               onChange={(e) => setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, postType: e.target.value } } : n))}
             >
@@ -425,7 +416,7 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
               <div className="text-xs text-slate-400 py-1">確認中...</div>
             ) : accounts.length > 0 ? (
               <select
-                className={`w-full text-xs p-1.5 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200`}
+                className={`nodrag w-full text-xs p-1.5 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200`}
                 value={data.accountId || accounts[0].accountId}
                 onChange={(e) => setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, accountId: e.target.value } } : n))}
               >
@@ -516,8 +507,7 @@ export const PostGenerationAiNode = memo(({ id, data }: { id: string, data: any 
         <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'ターゲット層向けに投稿作成'}</div>
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ターゲットSNS</label>
-          <select
-            className="w-full text-xs p-1.5 border border-indigo-200 rounded-md bg-indigo-50 text-indigo-700 focus:outline-none focus:border-indigo-400 cursor-pointer font-medium"
+          <select className="nodrag w-full text-xs p-1.5 border border-indigo-200 rounded-md bg-indigo-50 text-indigo-700 focus:outline-none focus:border-indigo-400 cursor-pointer font-medium"
             defaultValue={data.targetPlatform || 'instagram'}
             onChange={(e) => {}}
           >
@@ -527,9 +517,8 @@ export const PostGenerationAiNode = memo(({ id, data }: { id: string, data: any 
             <option value="tiktok">TikTok</option>
           </select>
         </div>
-        <textarea
-          placeholder="口調やフォーマットの指示（例：絵文字多め、Z世代風）"
-          className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md mt-1 focus:outline-none focus:border-indigo-500 resize-none h-16"
+        <textarea placeholder="口調やフォーマットの指示（例：絵文字多め、Z世代風）"
+          className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md mt-1 focus:outline-none focus:border-indigo-500 resize-none h-16"
           defaultValue={data.promptStyle || ''}
         />
       </div>
@@ -559,8 +548,7 @@ export const PreviewNode = memo(({ id, data }: { id: string, data: any }) => {
                   編集を確定
                 </button>
               </div>
-              <textarea
-                className="w-full text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-2 focus:outline-none focus:border-emerald-500 resize-y min-h-[100px]"
+              <textarea className="nodrag w-full text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-2 focus:outline-none focus:border-emerald-500 resize-y min-h-[100px]"
                 defaultValue={data.previewContent}
                 onChange={(e) => {}}
               />
@@ -626,8 +614,7 @@ export const DriveNode = memo(({ id, data }: { id: string, data: any }) => {
         )}
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">アクション</label>
-          <select
-            className="w-full text-xs p-1.5 border border-green-200 rounded-md bg-green-50 text-green-700 focus:outline-none focus:border-green-400 cursor-pointer font-medium"
+          <select className="nodrag w-full text-xs p-1.5 border border-green-200 rounded-md bg-green-50 text-green-700 focus:outline-none focus:border-green-400 cursor-pointer font-medium"
             defaultValue={data.action || 'read-sheet'}
             onChange={(e) => {}}
           >
@@ -638,10 +625,9 @@ export const DriveNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ファイルURL / ID</label>
-          <input 
-            type="text" 
+          <input type="text" 
             placeholder="https://docs.google.com/..." 
-            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-green-500"
+            className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-green-500"
             defaultValue={data.fileUrl || ''}
           />
         </div>
@@ -673,8 +659,7 @@ export const GoogleCalendarNode = memo(({ id, data }: { id: string, data: any })
         <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || '指定イベントで実行開始'}</div>
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">フックするイベント条件</label>
-          <select 
-            className="w-full text-xs p-1.5 border border-blue-200 rounded-md bg-blue-50 text-blue-700 focus:outline-none focus:border-blue-400 cursor-pointer font-medium"
+          <select className="nodrag w-full text-xs p-1.5 border border-blue-200 rounded-md bg-blue-50 text-blue-700 focus:outline-none focus:border-blue-400 cursor-pointer font-medium"
             defaultValue={data.eventTrigger || 'event-start'}
             onChange={(e) => {}}
           >
@@ -685,10 +670,9 @@ export const GoogleCalendarNode = memo(({ id, data }: { id: string, data: any })
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">カレンダー / キーワード指定</label>
-          <input 
-            type="text" 
+          <input type="text" 
             placeholder="例: 会議, #sns, 重要な予定" 
-            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-blue-400"
+            className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-blue-400"
             defaultValue={data.keyword || ''}
           />
         </div>
@@ -722,8 +706,7 @@ export const GoogleDocsNode = memo(({ id, data }: { id: string, data: any }) => 
         <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'ドキュメント操作'}</div>
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">アクション</label>
-          <select 
-            className="w-full text-xs p-1.5 border border-emerald-200 rounded-md bg-emerald-50 text-emerald-700 focus:outline-none focus:border-emerald-400 cursor-pointer font-medium"
+          <select className="nodrag w-full text-xs p-1.5 border border-emerald-200 rounded-md bg-emerald-50 text-emerald-700 focus:outline-none focus:border-emerald-400 cursor-pointer font-medium"
             defaultValue={data.action || 'create-doc'}
           >
             <option value="create-doc">新規作成・追記</option>
@@ -732,10 +715,9 @@ export const GoogleDocsNode = memo(({ id, data }: { id: string, data: any }) => 
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ドキュメントURL / ID</label>
-          <input 
-            type="text" 
+          <input type="text" 
             placeholder="新規作成時は空欄" 
-            className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-emerald-400"
+            className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-emerald-400"
             defaultValue={data.fileUrl || ''}
           />
         </div>
@@ -771,19 +753,17 @@ export const NoteNode = memo(({ id, data }: { id: string, data: any }) => {
         <div className="opacity-70">
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">タイトル</label>
-            <input 
-              type="text" 
+            <input type="text" 
               placeholder="生成されたタイトル" 
-              className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed bg-slate-50 dark:bg-slate-950"
+              className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed bg-slate-50 dark:bg-slate-950"
               disabled
             />
           </div>
           <div className="flex flex-col gap-1 mt-1">
             <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ハッシュタグ</label>
-            <input 
-              type="text" 
+            <input type="text" 
               placeholder="#note #AI" 
-              className="w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed bg-slate-50 dark:bg-slate-950"
+              className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed bg-slate-50 dark:bg-slate-950"
               disabled
             />
           </div>
@@ -810,8 +790,7 @@ export const TiktokNode = memo(({ id, data }: { id: string, data: any }) => {
         
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">投稿タイプ</label>
-          <select 
-            className="w-full text-xs p-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer font-medium"
+          <select className="nodrag w-full text-xs p-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer font-medium"
             defaultValue={data.postType || 'video'}
           >
             <option value="video">ショート動画投稿</option>
@@ -949,9 +928,8 @@ export const TextInputNode = memo(({ id, data }: { id: string, data: any }) => {
       <NodeHeader icon={MessageSquare} title="テキスト入力" gradient="from-sky-400 to-blue-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
         <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">投稿するテキスト内容</label>
-        <textarea
-          placeholder="ここに投稿するテキストを直接入力してください..."
-          className="w-full text-sm p-3 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-sky-400 resize-none h-28 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+        <textarea placeholder="ここに投稿するテキストを直接入力してください..."
+          className="nodrag w-full text-sm p-3 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-sky-400 resize-none h-28 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
           value={text}
           onChange={(e) => {
             setText(e.target.value);
@@ -988,10 +966,9 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
       <div className="p-4 flex flex-col gap-3">
         <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">画像URL</label>
         <div className="flex gap-2">
-          <input
-            type="text"
+          <input type="text"
             placeholder="https://example.com/image.jpg"
-            className="flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-violet-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+            className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-violet-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             onBlur={() => applyUrl(imageUrl)}
@@ -1045,10 +1022,9 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
       <div className="p-4 flex flex-col gap-3">
         <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">動画URL</label>
         <div className="flex gap-2">
-          <input
-            type="text"
+          <input type="text"
             placeholder="https://example.com/video.mp4"
-            className="flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-orange-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+            className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-orange-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
             onBlur={() => applyUrl(videoUrl)}
@@ -1117,9 +1093,8 @@ export const GroupNode = memo(({ id, data, selected }: { id: string; data: any; 
       />
       <div className={`absolute top-0 left-0 right-0 h-8 ${c.headerBg} rounded-t-2xl flex items-center justify-between px-3`}>
         {editing ? (
-          <input
-            autoFocus
-            className="bg-white/30 text-white placeholder-white/70 text-xs font-semibold rounded px-1 outline-none w-full"
+          <input autoFocus
+            className="nodrag bg-white/30 text-white placeholder-white/70 text-xs font-semibold rounded px-1 outline-none w-full"
             value={label}
             onChange={e => setLabel(e.target.value)}
             onBlur={() => {

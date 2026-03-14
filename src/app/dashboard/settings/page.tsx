@@ -24,6 +24,7 @@ export default function SettingsPage() {
   const [socialAccounts, setSocialAccounts] = useState<SocialAccounts>({});
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [twitterConfirmOpen, setTwitterConfirmOpen] = useState(false);
 
   useEffect(() => {
     fetchSocialAccounts();
@@ -56,6 +57,14 @@ export default function SettingsPage() {
     } catch (error) {
       console.error(`Failed to connect ${provider}:`, error);
       setConnecting(null);
+    }
+  };
+
+  const handleConnectClick = (platformId: string, isConnected: boolean) => {
+    if (platformId === "twitter" && isConnected) {
+      setTwitterConfirmOpen(true);
+    } else {
+      handleConnect(platformId);
     }
   };
 
@@ -184,7 +193,7 @@ export default function SettingsPage() {
                     </div>
 
                     <button
-                      onClick={() => !platform.disabled && handleConnect(platform.id)}
+                      onClick={() => !platform.disabled && handleConnectClick(platform.id, isConnected)}
                       disabled={connecting !== null || platform.disabled}
                       className={`ml-4 px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
                         isConnected
@@ -242,6 +251,48 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+        {/* Twitter Account Switch Confirm Modal */}
+        {twitterConfirmOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 text-slate-900 dark:text-slate-100">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-xl border border-slate-200 dark:border-slate-800">
+              <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                <AlertCircle className="text-amber-500 w-6 h-6" />
+                X (Twitter) の追加連携
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-5 leading-relaxed">
+                別のアカウントを連携するには、あらかじめ別のタブでX（旧Twitter）から現在のアカウントを<strong>ログアウト</strong>するか、連携したいアカウントに<strong>切り替えて</strong>おく必要があります。
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <a 
+                  href="https://twitter.com/logout" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full text-center px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-xl transition-colors text-sm"
+                >
+                  X.com を開いてログアウトする
+                </a>
+                <button 
+                  onClick={() => {
+                    setTwitterConfirmOpen(false);
+                    handleConnect("twitter");
+                  }}
+                  className="w-full text-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm"
+                >
+                  続けて連携する
+                </button>
+                <button 
+                  onClick={() => setTwitterConfirmOpen(false)}
+                  className="w-full text-center px-4 py-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium text-sm mt-1"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
     </div>
   );
 }
