@@ -109,7 +109,7 @@ export const executeWorkflow = inngest.createFunction(
 // =============================================
 export const scheduledWorkflowRunner = inngest.createFunction(
   { id: "scheduled-workflow-runner" },
-  { cron: "* * * * *" }, // 毎分チェック
+  { event: "app/workflow.scheduled" }, // 毎分チェック(後でcronに戻す場合は要検証)
   async ({ step }) => {
     const now = new Date();
 
