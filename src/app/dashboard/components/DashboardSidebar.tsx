@@ -114,7 +114,7 @@ export function DashboardSidebar() {
               </div>
             </div>
             <button 
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: "/login" })}
               className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
               title="ログアウト"
             >
