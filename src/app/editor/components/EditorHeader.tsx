@@ -59,6 +59,9 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
   };
 
   const handleExecute = async () => {
+    // 実行前に必ず最新状態を保存する
+    await handleSave();
+
     const nodes = getNodes();
     const edges = getEdges();
     if (onExecute) {
