@@ -195,12 +195,27 @@ export async function postToSNS(
       }
       
       case "twitter": {
-        // Twitter API v2 (将来的に実装)
-        console.log("Posting to Twitter (X) API with token:", accessToken.substring(0, 10) + "...");
+        // Twitter API v2 POST /2/tweets
+        const twitterRes = await fetch("https://api.twitter.com/2/tweets", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: message }),
+        });
+        
+        const twitterData = await twitterRes.json();
+        
+        if (!twitterRes.ok || twitterData.errors) {
+          const errMsg = twitterData.errors?.[0]?.message || twitterData.detail || "Twitter API error";
+          return { success: false, platform, error: errMsg };
+        }
+        
         return {
-          success: false,
+          success: true,
           platform,
-          error: "Twitter APIは現在準備中です。",
+          data: twitterData.data,
         };
       }
       

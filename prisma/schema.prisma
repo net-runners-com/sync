@@ -93,6 +93,11 @@ model Workflow {
   isPublic    Boolean  @default(false)
   folder      String?
 
+  // スケジュール実行設定
+  isScheduled Boolean  @default(false)
+  schedule    String?  // cron表記 ("0 9 * * *") またの ISO日時文字列
+  nextRunAt   DateTime?
+
   // React FlowのJSONデータ群
   nodes       Json     @default("[]")
   edges       Json     @default("[]")
