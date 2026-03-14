@@ -32,7 +32,7 @@ export const executeWorkflow = inngest.createFunction(
         generatedText = textInputNode.data.text;
       } else if (textAiNode) {
         const prompt = textAiNode.data?.customPrompt || "最新のAIニュースを100文字でSNS向けに要約して";
-        const model = textAiNode.data?.model || "meta-llama/llama-3.3-70b-instruct:free";
+        const model = textAiNode.data?.model || "openai/gpt-4o-mini";
         console.log(`[Workflow: ${workflowId}] テキスト生成中... モデル: ${model}`);
         generatedText = await generateTextWithAI(prompt, model);
       } else {

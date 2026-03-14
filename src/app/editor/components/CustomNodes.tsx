@@ -54,7 +54,7 @@ export const TextAiNode = memo(({ id, data }: { id: string, data: any }) => {
   const [promptMode, setPromptMode] = useState<'text' | 'json'>(data.promptMode || 'text');
   const [prompt, setPrompt] = useState(data.customPrompt || '');
   const [jsonPrompt, setJsonPrompt] = useState(data.jsonPrompt || '{\n  "instruction": "",\n  "context": ""\n}');
-  const [model, setModel] = useState(data.model || 'meta-llama/llama-3.3-70b-instruct:free');
+  const [model, setModel] = useState(data.model || 'openai/gpt-4o-mini');
 
   const handleRun = async () => {
     const finalPrompt = promptMode === 'json' ? jsonPrompt : prompt;
@@ -845,7 +845,7 @@ export const DynamicCustomNode = memo(({ id, data }: { id: string, data: any }) 
         const res = await fetch('/api/ai/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'text', prompt: finalPrompt, model: "meta-llama/llama-3.3-70b-instruct:free" }),
+          body: JSON.stringify({ type: 'text', prompt: finalPrompt, model: "openai/gpt-4o-mini" }),
         });
         const respData = await res.json();
         if (respData.error) setOutput(`⚠ ${respData.error}`);

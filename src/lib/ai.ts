@@ -1,23 +1,46 @@
 import OpenAI from "openai";
 
-// OpenRouter経由でのテキスト生成
-export async function generateTextWithAI(prompt: string, model: string = "openai/gpt-4o-mini", customApiKey?: string) {
-  // baseUrl を OpenRouter に向けることで、openai パッケージをそのまま利用可能
+const FREE_TEXT_MODELS = [
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemma-3-27b-it:free",
+  "mistralai/mistral-small-3.1-24b-instruct:free",
+  "google/gemma-3-12b-it:free",
+  "openai/gpt-oss-20b:free"
+];
+
+// OpenRouter経由でのテキスト生成 (フォールバック対応)
+export async function generateTextWithAI(prompt: string, model: string = "meta-llama/llama-3.3-70b-instruct:free", customApiKey?: string) {
   const openai = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: customApiKey || process.env.OPENROUTER_API_KEY,
     defaultHeaders: {
-      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000", // アプリのURL
-      "X-Title": "Sync", // アプリ名
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "X-Title": "Sync",
     }
   });
 
-  const response = await openai.chat.completions.create({
-    model: model, // 例: "anthropic/claude-3.5-sonnet", "google/gemini-pro" などが指定可能
-    messages: [{ role: "user", content: prompt }],
-  });
-  
-  return response.choices[0].message.content;
+  const modelQueue = [model, ...FREE_TEXT_MODELS.filter(m => m !== model)];
+  let lastError: any;
+
+  for (const m of modelQueue) {
+    try {
+      const response = await openai.chat.completions.create({
+        model: m,
+        messages: [{ role: "user", content: prompt }],
+      });
+      return response.choices[0].message.content;
+    } catch (err: any) {
+      lastError = err;
+      const status = err?.status ?? err?.code;
+      // 429(レートリミット), 503(サーバーエラー), 404(モデルなし), 402(クレジット不足) はフォールバックする
+      if (status === 429 || status === 503 || status === 404 || status === 402) {
+        console.warn(`[AI TextGen] Model ${m} failed with ${status}, trying next...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError;
 }
 
 // OpenRouter経由の画像生成 (現状OpenRouterはDALL-E等の画像生成APIに非対応の部分が多いため、必要に応じて別のプロバイダを利用します)
