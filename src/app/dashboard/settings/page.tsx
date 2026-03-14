@@ -6,17 +6,17 @@ import { signIn } from "next-auth/react";
 import { useTheme } from "@/lib/ThemeContext";
 
 interface SocialAccountStatus {
-  connected: boolean;
-  accountId?: string;
+  accountId: string;
   hasToken: boolean;
   scope?: string | null;
 }
 
 interface SocialAccounts {
-  facebook?: SocialAccountStatus;
-  instagram?: SocialAccountStatus;
-  twitter?: SocialAccountStatus;
-  google?: SocialAccountStatus;
+  facebook?: SocialAccountStatus[];
+  instagram?: SocialAccountStatus[];
+  twitter?: SocialAccountStatus[];
+  google?: SocialAccountStatus[];
+  [key: string]: SocialAccountStatus[] | undefined;
 }
 
 export default function SettingsPage() {
@@ -48,9 +48,11 @@ export default function SettingsPage() {
     try {
       // NextAuth の signIn でOAuthフローを開始
       // callbackUrl はログイン後に戻るページ
-      await signIn(provider, {
-        callbackUrl: "/dashboard/settings?connected=" + provider,
-      });
+      await signIn(
+        provider,
+        { callbackUrl: "/dashboard/settings?connected=" + provider },
+        { prompt: provider === "twitter" ? "consent" : "select_account" } // force re-authentication / account selection
+      );
     } catch (error) {
       console.error(`Failed to connect ${provider}:`, error);
       setConnecting(null);
@@ -63,8 +65,7 @@ export default function SettingsPage() {
       name: "Facebook Pages",
       icon: <Facebook className="w-6 h-6 text-blue-600" fill="currentColor" stroke="none" />,
       description: "Facebookページへの投稿・スケジュール管理。Instagramへの投稿にも使用されます。",
-      connected: socialAccounts.facebook?.connected || false,
-      hasToken: socialAccounts.facebook?.hasToken || false,
+      accounts: socialAccounts.facebook || [],
       color: "bg-blue-50",
       borderColor: "border-blue-200",
       accentColor: "bg-blue-600 hover:bg-blue-700",
@@ -74,8 +75,7 @@ export default function SettingsPage() {
       name: "Instagram Business",
       icon: <Instagram className="w-6 h-6 text-pink-600" />,
       description: "Facebookアカウントで連携します。ビジネスアカウントのみ対応。",
-      connected: socialAccounts.facebook?.connected || false,
-      hasToken: socialAccounts.facebook?.hasToken || false,
+      accounts: socialAccounts.facebook || [],
       color: "bg-pink-50",
       borderColor: "border-pink-200",
       accentColor: "bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700",
@@ -86,8 +86,7 @@ export default function SettingsPage() {
       name: "X (Twitter)",
       icon: <Twitter className="w-6 h-6 text-slate-800" fill="currentColor" />,
       description: "ツイート自動化機能を利用して、投稿をスケジューリングできます。",
-      connected: socialAccounts.twitter?.connected || false,
-      hasToken: socialAccounts.twitter?.hasToken || false,
+      accounts: socialAccounts.twitter || [],
       color: "bg-slate-100",
       borderColor: "border-slate-200",
       accentColor: "bg-slate-800 hover:bg-slate-900",
@@ -155,70 +154,80 @@ export default function SettingsPage() {
               <span>連携状況を確認中...</span>
             </div>
           ) : (
-            platforms.map((platform, index) => (
-              <div
-                key={index}
-                className={`flex items-center justify-between p-6 bg-white dark:bg-slate-900 border rounded-2xl shadow-sm hover:shadow-md transition-shadow ${platform.connected ? "border-green-200 dark:border-green-900/50 bg-green-50/30 dark:bg-green-900/10" : "border-slate-200 dark:border-slate-800"}`}
-              >
-                <div className="flex items-center gap-5">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${platform.color} border ${platform.borderColor} dark:bg-opacity-10 dark:border-opacity-20`}>
-                    {platform.icon}
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{platform.name}</h3>
-                      {platform.connected && platform.hasToken && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
-                          <CheckCircle2 size={12} />
-                          連携済み
-                        </span>
-                      )}
-                      {platform.disabled && (
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                          準備中
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{platform.description}</p>
-                    {(!platform.connected || !platform.hasToken) && platform.note && (
-                      <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">📎 {platform.note}</p>
-                    )}
-                    {platform.connected && platform.hasToken && socialAccounts[platform.id as keyof SocialAccounts]?.accountId && (
-                      <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 w-fit">
-                        ID: {socialAccounts[platform.id as keyof SocialAccounts]?.accountId?.substring(0, 12)}...
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => !platform.disabled && handleConnect(platform.id)}
-                  disabled={connecting !== null || platform.disabled}
-                  className={`px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                    platform.connected && platform.hasToken
-                      ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
-                      : `text-white shadow-sm ${platform.accentColor}`
-                  }`}
+            platforms.map((platform, index) => {
+              const isConnected = platform.accounts.length > 0;
+              
+              return (
+                <div
+                  key={index}
+                  className={`flex flex-col p-6 bg-white dark:bg-slate-900 border rounded-2xl shadow-sm hover:shadow-md transition-shadow ${isConnected ? "border-green-200 dark:border-green-900/50" : "border-slate-200 dark:border-slate-800"}`}
                 >
-                  {connecting === platform.id ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      認証中...
-                    </>
-                  ) : platform.connected && platform.hasToken ? (
-                    <>
-                      <LogOut size={16} />
-                      再連携する
-                    </>
-                  ) : (
-                    <>
-                      <LinkIcon size={16} />
-                      連携する
-                    </>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-5">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${platform.color} border ${platform.borderColor} dark:bg-opacity-10 dark:border-opacity-20 flex-shrink-0`}>
+                        {platform.icon}
+                      </div>
+                      <div className="flex flex-col flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">{platform.name}</h3>
+                          {platform.disabled && (
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                              準備中
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{platform.description}</p>
+                        {(!isConnected) && platform.note && (
+                          <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">📎 {platform.note}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => !platform.disabled && handleConnect(platform.id)}
+                      disabled={connecting !== null || platform.disabled}
+                      className={`ml-4 px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isConnected
+                          ? "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                          : `text-white shadow-sm ${platform.accentColor}`
+                      }`}
+                    >
+                      {connecting === platform.id ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          認証中...
+                        </>
+                      ) : (
+                        <>
+                          {isConnected ? <LinkIcon size={16} /> : <LinkIcon size={16} />}
+                          {isConnected ? "アカウントを追加" : "連携する"}
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {isConnected && (
+                    <div className="mt-5 w-full">
+                      <div className="flex flex-col gap-2 bg-slate-50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800/80">
+                        {platform.accounts.map((acc, aIdx) => (
+                           <div key={aIdx} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+                             <div className="flex items-center gap-3">
+                               <CheckCircle2 size={18} className="text-green-500" />
+                               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                 連携アカウント
+                               </span>
+                               <span className="text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                                 ID: {acc.accountId}
+                               </span>
+                             </div>
+                           </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                </button>
-              </div>
-            ))
+                </div>
+              );
+            })
           )}
         </div>
 

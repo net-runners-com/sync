@@ -74,8 +74,8 @@ export const executeWorkflow = inngest.createFunction(
           userId as string,
           snsPlatform as "twitter" | "facebook" | "instagram",
           generatedContent.text as string,
-          generatedContent.imageUrl
-          // todo: Video upload if needed by postToSNS in the future
+          generatedContent.imageUrl,
+          snsNode.data?.accountId // 特定の連携アカウントIDがある場合は渡す
         );
         results.push(result);
       }

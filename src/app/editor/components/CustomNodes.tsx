@@ -32,6 +32,8 @@ const NodeHeader = ({ icon: Icon, title, gradient, nodeId }: { icon: any, title:
   );
 };
 
+// --- Group Node & Sticky Note (Utility Nodes) ---
+
 // --- トリガーノード ---
 export const TriggerNode = memo(({ id, data }: { id: string, data: any }) => {
   return (
@@ -321,9 +323,11 @@ IfElseNode.displayName = 'IfElseNode';
 
 // --- アクションノード: SNS投稿 ---
 export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) => {
+  const { setNodes } = useReactFlow();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isConnected, setIsConnected] = useState<boolean>(data.isAuthenticated ?? false);
   const [checkingAuth, setCheckingAuth] = useState(false);
+  const [accounts, setAccounts] = useState<{accountId: string; hasToken: boolean}[]>([]);
+  const isConnected = accounts.length > 0;
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -334,13 +338,19 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
           const d = await res.json();
           // Instagram は facebook で判定、 X (Twitter) は twitter で判定
           const providerKey = data.platform === 'instagram' ? 'facebook' : data.platform === 'x' ? 'twitter' : data.platform;
-          setIsConnected(d.accounts?.[providerKey]?.hasToken ?? false);
+          const providerAccounts = d.accounts?.[providerKey] || [];
+          setAccounts(providerAccounts);
+          
+          // data.accountIdが未設定で、有効なアカウントがあれば初期設定
+          if (!data.accountId && providerAccounts.length > 0) {
+            setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, accountId: providerAccounts[0].accountId } } : n));
+          }
         }
       } catch {}
       setCheckingAuth(false);
     };
     checkConnection();
-  }, [data.platform]);
+  }, [data.platform, data.accountId, id, setNodes]);
 
   const getIcon = () => {
     switch (data.platform) {
@@ -382,7 +392,7 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
             <select
               className={`w-full text-xs p-1.5 border ${getBorderColor()} rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50 dark:bg-slate-950`}
               defaultValue={data.postType || 'feed'}
-              onChange={(e) => {}}
+              onChange={(e) => setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, postType: e.target.value } } : n))}
             >
               {data.platform === 'x' ? (
                 <>
@@ -409,24 +419,37 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
             </select>
           </div>
 
-          {checkingAuth ? (
-            <div className="mt-1 text-center text-xs text-slate-400 py-2">確認中...</div>
-          ) : (
-            <div className="mt-3 flex items-center justify-between text-xs border border-slate-200 dark:border-slate-700 rounded p-2 bg-slate-50 dark:bg-slate-950">
-              <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-400"}`}></span>
-                {isConnected ? "連携済み" : "未連携"}
-              </span>
-              {!isConnected && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">連携アカウントを選択</label>
+            {checkingAuth ? (
+              <div className="text-xs text-slate-400 py-1">確認中...</div>
+            ) : accounts.length > 0 ? (
+              <select
+                className={`w-full text-xs p-1.5 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200`}
+                value={data.accountId || accounts[0].accountId}
+                onChange={(e) => setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, accountId: e.target.value } } : n))}
+              >
+                {accounts.map(acc => (
+                  <option key={acc.accountId} value={acc.accountId}>
+                    ID: {acc.accountId}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="flex items-center justify-between text-xs border border-red-200 dark:border-red-900/50 rounded p-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400">
+                <span className="flex items-center gap-1 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  連携がありません
+                </span>
                 <button
-                  className="text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-blue-600 hover:text-blue-800 underline"
                   onClick={() => toast.info("設定画面からアカウントを連携してください")}
                 >
-                  連携する
+                  設定へ
                 </button>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -76,9 +76,9 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 p-8 flex items-center justify-center min-h-[60vh] bg-[#1D212F]">
+      <div className="flex-1 p-8 flex items-center justify-center min-h-[60vh] bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-4 text-slate-400">
-          <Loader2 className="animate-spin text-[#00A5B4]" size={32} />
+          <Loader2 className="animate-spin text-blue-600 dark:text-blue-400" size={32} />
           <p>データを取得中...</p>
         </div>
       </div>
@@ -87,7 +87,7 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="flex-1 p-8 bg-[#1D212F]">
+      <div className="flex-1 p-8 bg-slate-50 dark:bg-slate-950">
         <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-2xl flex items-center gap-4">
           <AlertCircle size={24} />
           <p>{error}</p>
@@ -146,32 +146,32 @@ export default function AnalyticsPage() {
   const sparklineData = enrichedTimeSeries.slice(-14);
 
   return (
-    <div className="flex-1 bg-[#1D212F] text-white min-h-screen overflow-y-auto">
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white min-h-screen overflow-y-auto">
       {/* 👑 Top Header Bar */}
-      <div className="bg-[#282C3D] px-6 py-3 flex items-center justify-between border-b border-[#3A4056]">
+      <div className="bg-white dark:bg-slate-900 px-6 py-3 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-[#00A5B4]">
+          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <BarChart3 size={18} />
           </div>
           <h1 className="text-lg font-medium tracking-wide">
             【アナリティクス】 パフォーマンスレポート
           </h1>
         </div>
-        <div className="flex items-center gap-4 text-slate-300">
-          <button className="flex items-center gap-2 hover:text-white transition text-sm bg-[#1D212F] px-4 py-1.5 rounded-full border border-[#3A4056]">
+        <div className="flex items-center gap-4 text-slate-600 dark:text-slate-300">
+          <button className="flex items-center gap-2 hover:text-slate-900 dark:text-white transition text-sm bg-slate-50 dark:bg-slate-950 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800">
             <RotateCcw size={14} /> リセット
           </button>
-          <button className="flex items-center gap-2 hover:text-white transition text-sm bg-blue-500/20 text-[#00A5B4] px-4 py-1.5 rounded-full">
+          <button className="flex items-center gap-2 hover:text-slate-900 dark:text-white transition text-sm bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 px-4 py-1.5 rounded-full">
             <Share2 size={14} /> 共有
           </button>
-          <button className="hover:text-white transition w-8 h-8 flex justify-center items-center rounded-full bg-[#1D212F] border border-[#3A4056]">
+          <button className="hover:text-slate-900 dark:text-white transition w-8 h-8 flex justify-center items-center rounded-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
             <MoreVertical size={16} />
           </button>
         </div>
       </div>
 
       {/* 🎯 Tab Navigation (Looker style center-aligned tabs) */}
-      <div className="bg-[#282C3D] border-b border-[#3A4056] px-6">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6">
         <div className="flex items-center justify-center gap-8">
           {[
             { id: "overview", label: "サマリー (全体)", icon: <BarChart3 size={16} /> },
@@ -184,8 +184,8 @@ export default function AnalyticsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 py-4 px-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? "border-[#00A5B4] text-[#00A5B4]"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
+                  ? "border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
               {tab.icon}
@@ -197,8 +197,8 @@ export default function AnalyticsPage() {
 
       <div className="p-6 max-w-[1400px] mx-auto space-y-6">
         {!isConnected ? (
-          <div className="bg-[#282C3D] rounded-xl p-12 text-center border border-[#3A4056]">
-            <h2 className="text-xl text-white mb-2">アカウントが連携されていません</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-slate-200 dark:border-slate-800">
+            <h2 className="text-xl text-slate-900 dark:text-white mb-2">アカウントが連携されていません</h2>
             <p className="text-slate-400 mb-6">連携設定からアカウントを接続してください。</p>
           </div>
         ) : (
@@ -206,34 +206,34 @@ export default function AnalyticsPage() {
             {/* 📊 KPI Scorecards (Top Row) */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* カード1: 投稿数 */}
-              <div className="bg-[#282C3D] rounded-xl p-5 border border-[#3A4056] flex flex-col items-center justify-center text-center">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center">
                 <span className="text-slate-400 text-xs font-medium mb-2">投稿数</span>
-                <span className="text-3xl font-bold text-white mb-1">{totalPosts}</span>
-                <span className="text-[#00A5B4] text-[10px] font-medium flex items-center gap-1">↑ 12.5%</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-white mb-1">{totalPosts}</span>
+                <span className="text-blue-600 dark:text-blue-400 text-[10px] font-medium flex items-center gap-1">↑ 12.5%</span>
                 <div className="w-full px-4 mt-2"><Sparkline data={sparklineData.map(d => d.posts)} color="#FF4E42" /></div>
               </div>
 
               {/* カード2: インプレッション数 */}
-              <div className="bg-[#282C3D] rounded-xl p-5 border border-[#3A4056] flex flex-col items-center justify-center text-center">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center">
                 <span className="text-slate-400 text-xs font-medium mb-2">インプレッション数</span>
-                <span className="text-3xl font-bold text-white mb-1">{totalImpressions.toLocaleString()}</span>
-                <span className="text-[#00A5B4] text-[10px] font-medium flex items-center gap-1">↑ 36.1%</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-white mb-1">{totalImpressions.toLocaleString()}</span>
+                <span className="text-blue-600 dark:text-blue-400 text-[10px] font-medium flex items-center gap-1">↑ 36.1%</span>
                 <div className="w-full px-4 mt-2"><Sparkline data={sparklineData.map(d => d.impressions)} color="#FF4E42" /></div>
               </div>
 
               {/* カード3: エンゲージメント率 */}
-              <div className="bg-[#282C3D] rounded-xl p-5 border border-[#3A4056] flex flex-col items-center justify-center text-center">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center">
                 <span className="text-slate-400 text-xs font-medium mb-2">エンゲージメント率</span>
-                <span className="text-3xl font-bold text-white mb-1">{avgEngagementRate.toFixed(2)}%</span>
-                <span className="text-[#00A5B4] text-[10px] font-medium flex items-center gap-1">↑ 52.3%</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-white mb-1">{avgEngagementRate.toFixed(2)}%</span>
+                <span className="text-blue-600 dark:text-blue-400 text-[10px] font-medium flex items-center gap-1">↑ 52.3%</span>
                 <div className="w-full px-4 mt-2"><Sparkline data={sparklineData.map(d => d.engagementRate)} color="#FF4E42" /></div>
               </div>
 
               {/* カード4: エンゲージメント数 */}
-              <div className="bg-[#282C3D] rounded-xl p-5 border border-[#3A4056] flex flex-col items-center justify-center text-center">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center">
                 <span className="text-slate-400 text-xs font-medium mb-2">エンゲージメント数</span>
-                <span className="text-3xl font-bold text-white mb-1">{totalEngagements.toLocaleString()}</span>
-                <span className="text-[#00A5B4] text-[10px] font-medium flex items-center gap-1">↑ 107.3%</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-white mb-1">{totalEngagements.toLocaleString()}</span>
+                <span className="text-blue-600 dark:text-blue-400 text-[10px] font-medium flex items-center gap-1">↑ 107.3%</span>
                 <div className="w-full px-4 mt-2"><Sparkline data={sparklineData.map(d => d.engagements)} color="#FF4E42" /></div>
               </div>
             </div>
@@ -242,12 +242,12 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.5fr_1fr] gap-6">
               
               {/* 【左側】 インプレッション ＆ エンゲージメント率 */}
-              <div className="bg-[#282C3D] rounded-xl p-6 border border-[#3A4056] h-[500px] flex flex-col">
+              <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 h-[500px] flex flex-col">
                 <div className="flex items-center justify-center gap-6 mb-6">
-                   <div className="flex items-center gap-2 text-xs text-slate-300">
+                   <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                      <span className="w-3 h-3 rounded-full bg-[#FF4E42]"></span>エンゲージメント率
                    </div>
-                   <div className="flex items-center gap-2 text-xs text-slate-300">
+                   <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                      <span className="w-3 h-3 bg-[#00A5B4]"></span>インプレッション数
                    </div>
                 </div>
@@ -297,8 +297,8 @@ export default function AnalyticsPage() {
               <div className="flex flex-col gap-6 h-[500px]">
                 
                 {/* 上段: 投稿数 */}
-                <div className="bg-[#282C3D] rounded-xl p-6 border border-[#3A4056] flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 text-xs text-slate-300 justify-center mb-4">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 flex-1 flex flex-col">
+                  <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 justify-center mb-4">
                      <span className="w-3 h-3 rounded-full bg-[#FF4E42]"></span>投稿数
                   </div>
                   <div className="flex-1 w-full">
@@ -323,8 +323,8 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* 下段: エンゲージメント内訳(スタックバー) */}
-                <div className="bg-[#282C3D] rounded-xl p-6 border border-[#3A4056] flex-1 flex flex-col">
-                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] text-slate-300 mb-4">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 flex-1 flex flex-col">
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] text-slate-600 dark:text-slate-300 mb-4">
                      <div className="flex items-center gap-1"><span className="w-3 h-3 bg-[#FF4E42]"></span>いいね数</div>
                      <div className="flex items-center gap-1"><span className="w-3 h-3 bg-[#00A5B4]"></span>リツイート数</div>
                      <div className="flex items-center gap-1"><span className="w-3 h-3 bg-[#E11D48]"></span>返信数</div>

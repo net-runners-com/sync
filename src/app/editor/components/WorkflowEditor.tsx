@@ -111,6 +111,8 @@ interface WorkflowEditorProps {
   completedNodeIds?: string[];
 }
 
+import { Group } from "lucide-react";
+
 export default function WorkflowEditor({
   initialNodes: propNodes,
   initialEdges: propEdges,
@@ -121,7 +123,19 @@ export default function WorkflowEditor({
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(propNodes && propNodes.length > 0 ? propNodes : initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(propEdges && propEdges.length > 0 ? propEdges : initialEdges);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes } = useReactFlow();
+  
+  // 選択されているノードを保持 (GroupNode は除外)
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+
+  // Selection change を監視して独自stateに反映 (onSelectionChangeコールバック用)
+  const onSelectionChange = useCallback(({ nodes: selected }: { nodes: any[] }) => {
+    setSelectedNodes(
+      selected
+        .filter((n) => n.type !== "groupNode")
+        .map((n) => n.id)
+    );
+  }, []);
 
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((eds) => addEdge({ ...params, type: 'custom', animated: true }, eds)),
@@ -155,6 +169,7 @@ export default function WorkflowEditor({
         type: nodeData.type,
         position,
         data: { label: nodeData.label, ...nodeData },
+        style: nodeData.type === 'groupNode' ? { width: 400, height: 300 } : undefined,
       };
 
       setNodes((nds) => nds.concat(newNode));
@@ -162,7 +177,75 @@ export default function WorkflowEditor({
     [screenToFlowPosition, setNodes]
   );
 
-  // 実行中はノードとエッジに視覚的なハイライトを適用
+  // 選択されたノード群を GroupNode で囲む処理
+  const handleGroupSelection = () => {
+    if (selectedNodes.length === 0) return;
+
+    const currentNodes = getNodes();
+    const targetNodes = currentNodes.filter((n) => selectedNodes.includes(n.id));
+
+    if (targetNodes.length === 0) return;
+
+    // 選択ノード群を囲む Bounding Box を計算
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+    targetNodes.forEach((node) => {
+      // position は親 (または絶対座標)
+      const x = node.position.x;
+      const y = node.position.y;
+      const w = node.measured?.width || 250;
+      const h = node.measured?.height || 100;
+
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x + w > maxX) maxX = x + w;
+      if (y + h > maxY) maxY = y + h;
+    });
+
+    // パディングを追加して GroupNode の座標とサイズを決定
+    const padding = 50;
+    const groupX = minX - padding;
+    const groupY = minY - padding - 40; // ヘッダー分多めに
+    const groupW = (maxX - minX) + padding * 2;
+    const groupH = (maxY - minY) + padding * 2 + 40;
+
+    const groupId = `group_${Date.now()}`;
+
+    // 新規グループノード
+    const newGroupNode = {
+      id: groupId,
+      type: "groupNode",
+      position: { x: groupX, y: groupY },
+      style: { width: groupW, height: groupH },
+      data: { label: "新しいグループ" },
+      zIndex: -1, // 背面に配置
+    };
+
+    // 既存ノードをグループの子要素に変更し、相対座標に変換
+    setNodes((nds) => {
+      const updatedNodes = nds.map((n) => {
+        if (selectedNodes.includes(n.id)) {
+          return {
+            ...n,
+            parentId: groupId,
+            extent: 'parent' as const,
+            position: {
+              x: n.position.x - groupX,
+              y: n.position.y - groupY,
+            },
+          };
+        }
+        return n;
+      });
+
+      // GroupNode自身を末尾(または先頭)に追加
+      return [newGroupNode, ...updatedNodes];
+    });
+
+    setSelectedNodes([]); // 選択解除
+  };
+
+  // 実行中の視覚的なハイライトを適用
   const styledNodes = nodes.map((node) => {
     const isRunning = executingNodeIds.includes(node.id);
     const isDone = completedNodeIds.includes(node.id);
@@ -201,13 +284,30 @@ export default function WorkflowEditor({
   });
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-slate-950" ref={reactFlowWrapper}>
+    <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-slate-950 relative" ref={reactFlowWrapper}>
       {isExecuting && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg animate-pulse flex items-center gap-2">
           <span className="w-2 h-2 bg-white rounded-full animate-ping inline-block" />
           ワークフローを実行中...
         </div>
       )}
+
+      {/* 選択ツールバー (複数ノード選択時) */}
+      {selectedNodes.length >= 2 && !isExecuting && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-xl shadow-xl animate-in slide-in-from-top-4">
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400 px-3 border-r border-slate-200 dark:border-slate-700">
+            {selectedNodes.length} ノードを選択中
+          </span>
+          <button
+            onClick={handleGroupSelection}
+            className="flex items-center gap-2 px-4 py-1.5 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-semibold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/30 transition-colors"
+          >
+            <Group size={16} />
+            グループ化する
+          </button>
+        </div>
+      )}
+
       <div className="flex-1 w-full h-full border-t border-slate-200 dark:border-slate-700">
         <ReactFlow
           nodes={styledNodes}
@@ -217,6 +317,7 @@ export default function WorkflowEditor({
           onConnect={onConnect}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          onSelectionChange={onSelectionChange}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
@@ -239,6 +340,7 @@ export default function WorkflowEditor({
                 case 'textInputNode': return '#0ea5e9';
                 case 'imageInputNode': return '#8b5cf6';
                 case 'videoInputNode': return '#f97316';
+                case 'groupNode': return '#cbd5e1';
                 default: return '#eee';
               }
             }}
@@ -249,3 +351,4 @@ export default function WorkflowEditor({
     </div>
   );
 }
+

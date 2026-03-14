@@ -21,26 +21,25 @@ export async function GET() {
       },
     });
 
-    // プロバイダーごとに連携状況をまとめる
-    const socialStatus: Record<string, { connected: boolean; accountId?: string; hasToken: boolean; scope?: string | null }> = {
-      facebook: { connected: false, hasToken: false },
-      instagram: { connected: false, hasToken: false },
-      twitter: { connected: false, hasToken: false },
-      google: { connected: false, hasToken: false },
+    // プロバイダーごとに連携済みアカウントリストをまとめる
+    const socialAccounts: Record<string, { accountId: string; hasToken: boolean; scope?: string | null }[]> = {
+      facebook: [],
+      instagram: [],
+      twitter: [],
+      google: [],
     };
 
     for (const account of accounts) {
-      if (socialStatus[account.provider] !== undefined) {
-        socialStatus[account.provider] = {
-          connected: true,
+      if (socialAccounts[account.provider]) {
+        socialAccounts[account.provider].push({
           accountId: account.providerAccountId,
           hasToken: !!account.access_token,
           scope: account.scope,
-        };
+        });
       }
     }
 
-    return NextResponse.json({ accounts: socialStatus });
+    return NextResponse.json({ accounts: socialAccounts });
   } catch (error) {
     console.error("Social Accounts GET Error:", error);
     return NextResponse.json({ error: "Failed to fetch social accounts" }, { status: 500 });

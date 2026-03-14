@@ -199,13 +199,15 @@ export async function postToSNS(
   userId: string,
   platform: "twitter" | "instagram" | "facebook",
   message: string,
-  imageUrl?: string | null
+  imageUrl?: string | null,
+  accountId?: string
 ): Promise<{ success: boolean; platform: string; data?: any; error?: string }> {
   // DBからユーザーのOAuthアクセストークンを取得
   const account = await prisma.account.findFirst({
     where: {
       userId,
       provider: platform === "instagram" ? "facebook" : platform, // InstagramはFacebook経由で認証
+      ...(accountId ? { providerAccountId: accountId } : {})
     },
   });
 
