@@ -1,5 +1,5 @@
-import React, { memo, useState, useEffect } from 'react';
-import { Handle, Position, useReactFlow } from '@xyflow/react';
+import React, { memo, useState, useEffect, useRef } from 'react';
+import { Handle, Position, useReactFlow, NodeResizer } from '@xyflow/react';
 import {
   Clock, MessageSquare, Image as ImageIcon, Twitter, Instagram,
   Smartphone, GitBranch, Video, BarChart3, Facebook, Trash2, Upload,
@@ -1064,3 +1064,136 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
   );
 });
 VideoInputNode.displayName = 'VideoInputNode';
+
+// =============================================
+// グループノード — ノードを囲む視覚的グループ
+// =============================================
+export const GroupNode = memo(({ id, data, selected }: { id: string; data: any; selected?: boolean }) => {
+  const { setNodes } = useReactFlow();
+  const [label, setLabel] = useState(data?.label || 'グループ');
+  const [editing, setEditing] = useState(false);
+  const [color, setColor] = useState(data?.color || 'blue');
+
+  const colors: Record<string, { border: string; bg: string; headerBg: string; dot: string }> = {
+    blue:   { border: 'border-blue-400',   bg: 'bg-blue-50/30 dark:bg-blue-950/20',    headerBg: 'bg-blue-400',   dot: 'bg-blue-400' },
+    purple: { border: 'border-purple-400', bg: 'bg-purple-50/30 dark:bg-purple-950/20', headerBg: 'bg-purple-400', dot: 'bg-purple-400' },
+    green:  { border: 'border-green-400',  bg: 'bg-green-50/30 dark:bg-green-950/20',  headerBg: 'bg-green-400',  dot: 'bg-green-400' },
+    orange: { border: 'border-orange-400', bg: 'bg-orange-50/30 dark:bg-orange-950/20', headerBg: 'bg-orange-400', dot: 'bg-orange-400' },
+    rose:   { border: 'border-rose-400',   bg: 'bg-rose-50/30 dark:bg-rose-950/20',    headerBg: 'bg-rose-400',   dot: 'bg-rose-400' },
+  };
+  const c = colors[color] || colors.blue;
+
+  return (
+    <div className={`relative w-full h-full rounded-2xl border-2 border-dashed ${c.border} ${c.bg}`}>
+      <NodeResizer
+        minWidth={200}
+        minHeight={150}
+        isVisible={selected}
+        lineClassName={`!border-2 ${c.border}`}
+        handleClassName="!w-3 !h-3 !rounded-full !border-2 !border-white !shadow"
+      />
+      <div className={`absolute top-0 left-0 right-0 h-8 ${c.headerBg} rounded-t-2xl flex items-center justify-between px-3`}>
+        {editing ? (
+          <input
+            autoFocus
+            className="bg-white/30 text-white placeholder-white/70 text-xs font-semibold rounded px-1 outline-none w-full"
+            value={label}
+            onChange={e => setLabel(e.target.value)}
+            onBlur={() => {
+              setEditing(false);
+              setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, label } } : n));
+            }}
+            onKeyDown={e => { if (e.key === 'Enter') setEditing(false); }}
+          />
+        ) : (
+          <span
+            className="text-white text-xs font-semibold cursor-text select-none"
+            onDoubleClick={() => setEditing(true)}
+          >
+            {label}
+          </span>
+        )}
+        <div className="flex items-center gap-1">
+          {Object.keys(colors).map(k => (
+            <button
+              key={k}
+              onClick={() => {
+                setColor(k);
+                setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, color: k } } : n));
+              }}
+              className={`w-3 h-3 rounded-full ${colors[k].dot} border-2 ${color === k ? 'border-white' : 'border-white/40'} hover:scale-110 transition-transform`}
+            />
+          ))}
+          <button
+            onClick={() => setNodes(ns => ns.filter(n => n.id !== id))}
+            className="ml-1 text-white/70 hover:text-white text-xs leading-none"
+          >✕</button>
+        </div>
+      </div>
+    </div>
+  );
+});
+GroupNode.displayName = 'GroupNode';
+
+// =============================================
+// Sticky Note — キャンバスに貼る付箋メモ
+// =============================================
+export const StickyNoteNode = memo(({ id, data, selected }: { id: string; data: any; selected?: boolean }) => {
+  const { setNodes } = useReactFlow();
+  const [text, setText] = useState(data?.text || '');
+  const [color, setColor] = useState(data?.color || 'yellow');
+
+  const colors: Record<string, { bg: string; border: string; header: string; textarea: string }> = {
+    yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/40',  border: 'border-yellow-300', header: 'bg-yellow-200 dark:bg-yellow-800', textarea: 'bg-yellow-50 dark:bg-yellow-900/20' },
+    green:  { bg: 'bg-green-50 dark:bg-green-900/40',   border: 'border-green-300',  header: 'bg-green-200 dark:bg-green-800',  textarea: 'bg-green-50 dark:bg-green-900/20' },
+    blue:   { bg: 'bg-blue-50 dark:bg-blue-900/40',     border: 'border-blue-300',   header: 'bg-blue-200 dark:bg-blue-800',   textarea: 'bg-blue-50 dark:bg-blue-900/20' },
+    pink:   { bg: 'bg-pink-50 dark:bg-pink-900/40',     border: 'border-pink-300',   header: 'bg-pink-200 dark:bg-pink-800',   textarea: 'bg-pink-50 dark:bg-pink-900/20' },
+    purple: { bg: 'bg-purple-50 dark:bg-purple-900/40', border: 'border-purple-300', header: 'bg-purple-200 dark:bg-purple-800', textarea: 'bg-purple-50 dark:bg-purple-900/20' },
+  };
+  const c = colors[color] || colors.yellow;
+  const colorDots: Record<string, string> = {
+    yellow: 'bg-yellow-400', green: 'bg-green-400', blue: 'bg-blue-400', pink: 'bg-pink-400', purple: 'bg-purple-400'
+  };
+
+  return (
+    <div className={`relative rounded-xl border-2 shadow-md ${c.bg} ${c.border} flex flex-col overflow-hidden`} style={{ minWidth: 200, minHeight: 150 }}>
+      <NodeResizer
+        minWidth={160}
+        minHeight={120}
+        isVisible={selected}
+        lineClassName={`!border-2 ${c.border}`}
+        handleClassName="!w-3 !h-3 !rounded-full !border-2 !border-white !shadow"
+      />
+      <div className={`flex items-center justify-between px-3 py-1.5 ${c.header}`}>
+        <span className="text-xs font-bold text-slate-600 dark:text-slate-200 select-none">📝 メモ</span>
+        <div className="flex items-center gap-1">
+          {Object.keys(colors).map(k => (
+            <button
+              key={k}
+              onClick={() => {
+                setColor(k);
+                setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, color: k } } : n));
+              }}
+              className={`w-3 h-3 rounded-full ${colorDots[k]} border-2 ${color === k ? 'border-slate-600' : 'border-white/60'} hover:scale-110 transition-transform`}
+            />
+          ))}
+          <button
+            onClick={() => setNodes(ns => ns.filter(n => n.id !== id))}
+            className="ml-1 text-slate-400 hover:text-slate-600 text-xs leading-none"
+          >✕</button>
+        </div>
+      </div>
+      <textarea
+        className={`flex-1 p-3 text-sm text-slate-700 dark:text-slate-200 resize-none outline-none ${c.textarea} placeholder-slate-400`}
+        placeholder="メモを入力..."
+        value={text}
+        onChange={e => {
+          setText(e.target.value);
+          setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, text: e.target.value } } : n));
+        }}
+        style={{ minHeight: 80 }}
+      />
+    </div>
+  );
+});
+StickyNoteNode.displayName = 'StickyNoteNode';

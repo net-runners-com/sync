@@ -18,7 +18,8 @@ import "@xyflow/react/dist/style.css";
 import { 
   TriggerNode, TextAiNode, ImageAiNode, SocialActionNode, VideoAiNode, 
   AnalyzerNode, IfElseNode, PostGenerationAiNode, DriveNode, GoogleCalendarNode,
-  PreviewNode, DynamicCustomNode, TextInputNode, ImageInputNode, VideoInputNode
+  PreviewNode, DynamicCustomNode, TextInputNode, ImageInputNode, VideoInputNode,
+  GroupNode, StickyNoteNode
 } from "./CustomNodes";
 import CustomEdge from "./CustomEdge";
 
@@ -39,6 +40,8 @@ const nodeTypes: NodeTypes = {
   textInputNode: TextInputNode,
   imageInputNode: ImageInputNode,
   videoInputNode: VideoInputNode,
+  groupNode: GroupNode,
+  stickyNoteNode: StickyNoteNode,
 };
 
 // カスタムエッジの登録

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Clock, MessageSquare, Image as ImageIcon, Twitter, Instagram, 
   PackageOpen, GitBranch, Video, BarChart3, Facebook, Calendar, PenTool, Database, Box, Play, AlignLeft, Layout,
-  ChevronDown, ChevronRight, FileText, Music
+  ChevronDown, ChevronRight, FileText, Music, StickyNote, Group
 } from "lucide-react";
 
 interface CustomNode {
@@ -25,6 +25,7 @@ export default function Sidebar() {
     data: true,
     logic: true,
     sns: true,
+    canvas: true,
     custom: true
   });
 
@@ -333,6 +334,39 @@ export default function Sidebar() {
               >
                 <Music size={15} className="text-slate-900" />
                 TikTok
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* キャンバス整理 */}
+        <div>
+          <button 
+            onClick={() => toggleSection('canvas')}
+            className="w-full flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 px-2 hover:text-slate-600 transition-colors"
+          >
+            <span>キャンバス整理</span>
+            {openSections.canvas ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </button>
+          {openSections.canvas && (
+            <div className="grid gap-1.5">
+              <Button 
+                variant="outline" 
+                className="justify-start gap-2 shadow-sm cursor-grab border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
+                draggable
+                onDragStart={(e) => onDragStart(e, 'groupNode', 'グループ', { color: 'blue', label: 'グループ' })}
+              >
+                <Layout size={15} className="text-blue-500" />
+                グループ（囲み）
+              </Button>
+              <Button 
+                variant="outline" 
+                className="justify-start gap-2 shadow-sm cursor-grab border-yellow-300 hover:bg-yellow-50 hover:border-yellow-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
+                draggable
+                onDragStart={(e) => onDragStart(e, 'stickyNoteNode', 'メモ', { color: 'yellow', text: '' })}
+              >
+                <AlignLeft size={15} className="text-yellow-500" />
+                付箋メモ
               </Button>
             </div>
           )}
