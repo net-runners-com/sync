@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  // SaaS固有の設定
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+
+  // プランと利用制限
+  plan              PlanType  @default(FREE)
+  monthlyExecutions Int       @default(0) // 今月の実行回数
+  lastResetDate     DateTime  @default(now()) // 実行回数のリセット日
+
+  // 保存したAPIキー（本来は暗号化すべき）
+  openaiKey     String?
+  anthropicKey  String?
+  geminiKey     String?
+  openRouterKey String?
+
+  workflows   Workflow[]
+  customNodes CustomNode[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==========================================
+// アプリケーション固有のモデル
+// ==========================================
+
+enum PlanType {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model Workflow {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  isActive    Boolean  @default(false)
+  isPublic    Boolean  @default(false)
+  folder      String?
+
+  // React FlowのJSONデータ群
+  nodes       Json     @default("[]")
+  edges       Json     @default("[]")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs ExecutionLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ExecutionLog {
+  id         String   @id @default(cuid())
+  workflowId String
+  status     LogStatus @default(PENDING)
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  
+  // 実行結果の詳細ログ (JSON)
+  details    Json?
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+}
+
+enum LogStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model CustomNode {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  icon        String?  @default("Box")
+  isPublic    Boolean  @default(false)
+  
+  // カスタムノードの入出力および内部ロジック定義を保存
+  config      Json     @default("{}")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
