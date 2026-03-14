@@ -2,12 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { 
-  BarChart3, TrendingUp, Users, Eye, Activity,
-  Twitter, Facebook, Instagram, Loader2, AlertCircle
+  BarChart3, Twitter, Facebook, Instagram, Loader2, AlertCircle, Share2, MoreVertical, RotateCcw
 } from "lucide-react";
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area, BarChart, Bar, Legend
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  ComposedChart, Bar, Legend, Cell, AreaChart, Area, BarChart
 } from 'recharts';
 
 interface AnalyticsData {
@@ -29,6 +28,28 @@ interface PlatformData {
   facebook: AnalyticsData | null;
   instagram: AnalyticsData | null;
 }
+
+// Sparkline用ミニコンポーネント
+const Sparkline = ({ data, color }: { data: number[], color: string }) => {
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((d, i) => `${(i / (data.length - 1)) * 100},${100 - ((d - min) / range) * 100}`).join(' ');
+
+  return (
+    <svg viewBox="0 -10 100 120" className="w-full h-8 mt-2 overflow-visible" preserveAspectRatio="none">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="3"
+        points={points}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="100" cy={100 - ((data[data.length - 1] - min) / range) * 100} r="4" fill={color} />
+    </svg>
+  );
+};
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<PlatformData | null>(null);
@@ -55,10 +76,10 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 p-8 flex items-center justify-center min-h-[60vh]">
+      <div className="flex-1 p-8 flex items-center justify-center min-h-[60vh] bg-[#1D212F]">
         <div className="flex flex-col items-center gap-4 text-slate-400">
-          <Loader2 className="animate-spin text-blue-500" size={32} />
-          <p>インサイトデータを取得中...</p>
+          <Loader2 className="animate-spin text-[#00A5B4]" size={32} />
+          <p>データを取得中...</p>
         </div>
       </div>
     );
@@ -66,7 +87,7 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-8 bg-[#1D212F]">
         <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-2xl flex items-center gap-4">
           <AlertCircle size={24} />
           <p>{error}</p>
@@ -75,302 +96,273 @@ export default function AnalyticsPage() {
     );
   }
 
-  // アクティブなタブのデータを取得
   const currentData: AnalyticsData | null = activeTab === "overview" 
-    ? null // Overviewは全体の合算等を表示（今回は各プラットのどれか一つをデモ用に使用）
+    ? {
+        summary: {
+          totalFollowers: (data?.twitter?.summary.totalFollowers || 0) + (data?.facebook?.summary.totalFollowers || 0) + (data?.instagram?.summary.totalFollowers || 0),
+          monthlyImpressions: (data?.twitter?.summary.monthlyImpressions || 0) + (data?.facebook?.summary.monthlyImpressions || 0) + (data?.instagram?.summary.monthlyImpressions || 0),
+          monthlyEngagements: (data?.twitter?.summary.monthlyEngagements || 0) + (data?.facebook?.summary.monthlyEngagements || 0) + (data?.instagram?.summary.monthlyEngagements || 0),
+        },
+        timeseries: data?.twitter?.timeseries || [] // Overviewグラフ用は一旦Twitterをベース（本来は合算処理が必要）
+      }
     : data?.[activeTab as keyof PlatformData] || null;
 
-  // Overview用の合算データ計算
-  const calcOverview = () => {
-    if (!data) return { followers: 0, impressions: 0, engagements: 0 };
+  const isConnected = activeTab === "overview" || !!data?.[activeTab as keyof PlatformData];
+
+  // Looker Studio風にデモデータをエンリッチ（APIからプロパティが来ていない場合の補完）
+  const enrichedTimeSeries = currentData?.timeseries.map((t, i) => {
+    // 疑似データ生成 (Looker Studioに寄せるため)
+    const basePosts = Math.floor(Math.random() * 5) + 1;
+    const engagements = t.engagements || Math.floor(t.impressions * 0.05);
+    const engagementRate = t.impressions > 0 ? (engagements / t.impressions) * 100 : 0;
+    
+    // 内訳ダミー
+    const likes = Math.floor(engagements * 0.6);
+    const retweets = Math.floor(engagements * 0.2);
+    const replies = Math.floor(engagements * 0.1);
+    const urlClicks = Math.floor(engagements * 0.05);
+    const profileClicks = engagements - likes - retweets - replies - urlClicks;
+
     return {
-      followers: (data.twitter?.summary.totalFollowers || 0) + (data.facebook?.summary.totalFollowers || 0) + (data.instagram?.summary.totalFollowers || 0),
-      impressions: (data.twitter?.summary.monthlyImpressions || 0) + (data.facebook?.summary.monthlyImpressions || 0) + (data.instagram?.summary.monthlyImpressions || 0),
-      engagements: (data.twitter?.summary.monthlyEngagements || 0) + (data.facebook?.summary.monthlyEngagements || 0) + (data.instagram?.summary.monthlyEngagements || 0),
+      ...t,
+      dateFormatted: t.date.split("-").slice(1).join("/"), // MM/DD
+      posts: basePosts,
+      engagementRate: parseFloat(engagementRate.toFixed(2)),
+      engagements: engagements,
+      likes,
+      retweets,
+      replies,
+      urlClicks,
+      profileClicks
     };
-  };
+  }) || [];
 
-  const overview = calcOverview();
+  const totalPosts = enrichedTimeSeries.reduce((sum, t) => sum + t.posts, 0);
+  const totalEngagements = currentData?.summary.monthlyEngagements || 0;
+  const totalImpressions = currentData?.summary.monthlyImpressions || 0;
+  const avgEngagementRate = totalImpressions > 0 ? (totalEngagements / totalImpressions) * 100 : 0;
 
-  // プラットフォーム接続チェック
-  const isConnected = (platform: keyof PlatformData) => !!data?.[platform];
+  // Trend Sparkline Data (Last 14 days)
+  const sparklineData = enrichedTimeSeries.slice(-14);
 
   return (
-    <div className="flex-1 p-8 overflow-y-auto">
-      <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <BarChart3 className="text-blue-500" size={32} />
-            アナリティクス
-          </h1>
-          <p className="text-slate-400 mt-2">各SNSアカウントのパフォーマンス推移とインサイトを確認できます。</p>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex space-x-2 bg-slate-800/50 p-1 rounded-xl w-fit">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === "overview" 
-                ? "bg-slate-700 text-white shadow-sm" 
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-            }`}
-          >
-            全体サマリー
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("twitter")}
-            className={`px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all ${
-              activeTab === "twitter" 
-                ? "bg-white text-black shadow-sm" 
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-            }`}
-          >
-            <Twitter size={16} />
-            X (Twitter)
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("instagram")}
-            className={`px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all ${
-              activeTab === "instagram" 
-                ? "bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-500 text-white shadow-sm" 
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-            }`}
-          >
-            <Instagram size={16} />
-            Instagram
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("facebook")}
-            className={`px-6 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all ${
-              activeTab === "facebook" 
-                ? "bg-[#1877F2] text-white shadow-sm" 
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-            }`}
-          >
-            <Facebook size={16} />
-            Facebook
-          </button>
-        </div>
-
-        {/* Overview Tab Content */}
-        {activeTab === "overview" && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-colors">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150" />
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 text-blue-400 mb-4">
-                    <Users size={20} />
-                    <h3 className="font-semibold">総フォロワー数</h3>
-                  </div>
-                  <p className="text-4xl font-bold text-white tracking-tight">
-                    {overview.followers.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-green-400 mt-2 flex items-center gap-1">
-                    <TrendingUp size={14} /> +320 (30日間)
-                  </p>
-                </div>
-              </div>
-              
-              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 relative overflow-hidden group hover:border-purple-500/30 transition-colors">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150" />
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 text-purple-400 mb-4">
-                    <Eye size={20} />
-                    <h3 className="font-semibold">月間インプレッション</h3>
-                  </div>
-                  <p className="text-4xl font-bold text-white tracking-tight">
-                    {overview.impressions.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-green-400 mt-2 flex items-center gap-1">
-                    <TrendingUp size={14} /> +15.2%
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150" />
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 text-emerald-400 mb-4">
-                    <Activity size={20} />
-                    <h3 className="font-semibold">合計エンゲージメント</h3>
-                  </div>
-                  <p className="text-4xl font-bold text-white tracking-tight">
-                    {overview.engagements.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-emerald-400 mt-2 flex items-center gap-1">
-                    平均エンゲージメント率: {((overview.engagements / Math.max(overview.impressions, 1)) * 100).toFixed(2)}%
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Note */}
-            <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 p-4 rounded-xl flex items-start gap-4 text-sm">
-              <AlertCircle className="flex-shrink-0" size={20} />
-              <p>概要タブでは、連携済みのすべてのアカウント（X, Facebook, Instagram）の合算データを表示しています。プラットフォームごとの詳細な推移は、各タブを切り替えてご確認ください。</p>
-            </div>
+    <div className="flex-1 bg-[#1D212F] text-white min-h-screen overflow-y-auto">
+      {/* 👑 Top Header Bar */}
+      <div className="bg-[#282C3D] px-6 py-3 flex items-center justify-between border-b border-[#3A4056]">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-[#00A5B4]">
+            <BarChart3 size={18} />
           </div>
-        )}
+          <h1 className="text-lg font-medium tracking-wide">
+            【アナリティクス】 パフォーマンスレポート
+          </h1>
+        </div>
+        <div className="flex items-center gap-4 text-slate-300">
+          <button className="flex items-center gap-2 hover:text-white transition text-sm bg-[#1D212F] px-4 py-1.5 rounded-full border border-[#3A4056]">
+            <RotateCcw size={14} /> リセット
+          </button>
+          <button className="flex items-center gap-2 hover:text-white transition text-sm bg-blue-500/20 text-[#00A5B4] px-4 py-1.5 rounded-full">
+            <Share2 size={14} /> 共有
+          </button>
+          <button className="hover:text-white transition w-8 h-8 flex justify-center items-center rounded-full bg-[#1D212F] border border-[#3A4056]">
+            <MoreVertical size={16} />
+          </button>
+        </div>
+      </div>
 
-        {/* Platform Specific Tab Content */}
-        {activeTab !== "overview" && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {!isConnected(activeTab as keyof PlatformData) ? (
-              // 未連携時の表示
-              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
-                <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700">
-                  {activeTab === "twitter" && <Twitter size={32} className="text-slate-500" />}
-                  {activeTab === "instagram" && <Instagram size={32} className="text-slate-500" />}
-                  {activeTab === "facebook" && <Facebook size={32} className="text-slate-500" />}
-                </div>
-                <h2 className="text-xl font-bold text-white mb-2">アカウントが連携されていません</h2>
-                <p className="text-slate-400 max-w-md mb-6">
-                  {activeTab === "twitter" ? "X (Twitter)" : activeTab === "instagram" ? "Instagram" : "Facebook"} 
-                  のアナリティクスデータを確認するには、設定画面からOAuth連携を完了してください。
-                </p>
-                <a href="/dashboard/settings" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-                  連携設定へ移動する
-                </a>
+      {/* 🎯 Tab Navigation (Looker style center-aligned tabs) */}
+      <div className="bg-[#282C3D] border-b border-[#3A4056] px-6">
+        <div className="flex items-center justify-center gap-8">
+          {[
+            { id: "overview", label: "サマリー (全体)", icon: <BarChart3 size={16} /> },
+            { id: "twitter", label: "X (Twitter)", icon: <Twitter size={16} /> },
+            { id: "instagram", label: "Instagram", icon: <Instagram size={16} /> },
+            { id: "facebook", label: "Facebook", icon: <Facebook size={16} /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 py-4 px-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? "border-[#00A5B4] text-[#00A5B4]"
+                  : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-6 max-w-[1400px] mx-auto space-y-6">
+        {!isConnected ? (
+          <div className="bg-[#282C3D] rounded-xl p-12 text-center border border-[#3A4056]">
+            <h2 className="text-xl text-white mb-2">アカウントが連携されていません</h2>
+            <p className="text-slate-400 mb-6">連携設定からアカウントを接続してください。</p>
+          </div>
+        ) : (
+          <>
+            {/* 📊 KPI Scorecards (Top Row) */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* カード1: 投稿数 */}
+              <div className="bg-[#282C3D] rounded-xl p-5 border border-[#3A4056] flex flex-col items-center justify-center text-center">
+                <span className="text-slate-400 text-xs font-medium mb-2">投稿数</span>
+                <span className="text-3xl font-bold text-white mb-1">{totalPosts}</span>
+                <span className="text-[#00A5B4] text-[10px] font-medium flex items-center gap-1">↑ 12.5%</span>
+                <div className="w-full px-4 mt-2"><Sparkline data={sparklineData.map(d => d.posts)} color="#FF4E42" /></div>
               </div>
-            ) : (
-              // 連携済み時のデータ表示
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-5">
-                    <p className="text-sm font-medium text-slate-400">フォロワー数</p>
-                    <p className="text-3xl font-bold text-white mt-1 pt-1 border-t border-slate-700/50">
-                      {currentData?.summary.totalFollowers.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-5">
-                    <p className="text-sm font-medium text-slate-400">30日間のインプレッション</p>
-                    <p className="text-3xl font-bold text-white mt-1 pt-1 border-t border-slate-700/50">
-                      {currentData?.summary.monthlyImpressions.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-5">
-                    <p className="text-sm font-medium text-slate-400">30日間のエンゲージメント</p>
-                    <p className="text-3xl font-bold text-white mt-1 pt-1 border-t border-slate-700/50">
-                      {currentData?.summary.monthlyEngagements.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Charts Area */}
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-6">インプレッション推移 (30日間)</h3>
-                  <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={currentData?.timeseries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                        <XAxis 
-                          dataKey="date" 
-                          stroke="#94A3B8" 
-                          fontSize={12}
-                          tickLine={false}
-                          axisLine={false}
-                          tickFormatter={(val) => val.split("-").slice(1).join("/")} 
-                        />
-                        <YAxis 
-                          stroke="#94A3B8" 
-                          fontSize={12}
-                          tickLine={false}
-                          axisLine={false}
-                          tickFormatter={(val) => val >= 1000 ? `${(val/1000).toFixed(1)}k` : val}
-                        />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#1E293B', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
-                          itemStyle={{ color: '#E2E8F0' }}
-                          labelStyle={{ color: '#94A3B8', marginBottom: '4px' }}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="impressions" 
-                          stroke="#3B82F6" 
-                          strokeWidth={3}
-                          fillOpacity={1} 
-                          fill="url(#colorImpressions)" 
-                          name="インプレッション"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+              {/* カード2: インプレッション数 */}
+              <div className="bg-[#282C3D] rounded-xl p-5 border border-[#3A4056] flex flex-col items-center justify-center text-center">
+                <span className="text-slate-400 text-xs font-medium mb-2">インプレッション数</span>
+                <span className="text-3xl font-bold text-white mb-1">{totalImpressions.toLocaleString()}</span>
+                <span className="text-[#00A5B4] text-[10px] font-medium flex items-center gap-1">↑ 36.1%</span>
+                <div className="w-full px-4 mt-2"><Sparkline data={sparklineData.map(d => d.impressions)} color="#FF4E42" /></div>
+              </div>
 
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-6">エンゲージメント数・フォロワー推移</h3>
-                  <div className="h-[300px] w-full">
+              {/* カード3: エンゲージメント率 */}
+              <div className="bg-[#282C3D] rounded-xl p-5 border border-[#3A4056] flex flex-col items-center justify-center text-center">
+                <span className="text-slate-400 text-xs font-medium mb-2">エンゲージメント率</span>
+                <span className="text-3xl font-bold text-white mb-1">{avgEngagementRate.toFixed(2)}%</span>
+                <span className="text-[#00A5B4] text-[10px] font-medium flex items-center gap-1">↑ 52.3%</span>
+                <div className="w-full px-4 mt-2"><Sparkline data={sparklineData.map(d => d.engagementRate)} color="#FF4E42" /></div>
+              </div>
+
+              {/* カード4: エンゲージメント数 */}
+              <div className="bg-[#282C3D] rounded-xl p-5 border border-[#3A4056] flex flex-col items-center justify-center text-center">
+                <span className="text-slate-400 text-xs font-medium mb-2">エンゲージメント数</span>
+                <span className="text-3xl font-bold text-white mb-1">{totalEngagements.toLocaleString()}</span>
+                <span className="text-[#00A5B4] text-[10px] font-medium flex items-center gap-1">↑ 107.3%</span>
+                <div className="w-full px-4 mt-2"><Sparkline data={sparklineData.map(d => d.engagements)} color="#FF4E42" /></div>
+              </div>
+            </div>
+
+            {/* 📈 Charts Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.5fr_1fr] gap-6">
+              
+              {/* 【左側】 インプレッション ＆ エンゲージメント率 */}
+              <div className="bg-[#282C3D] rounded-xl p-6 border border-[#3A4056] h-[500px] flex flex-col">
+                <div className="flex items-center justify-center gap-6 mb-6">
+                   <div className="flex items-center gap-2 text-xs text-slate-300">
+                     <span className="w-3 h-3 rounded-full bg-[#FF4E42]"></span>エンゲージメント率
+                   </div>
+                   <div className="flex items-center gap-2 text-xs text-slate-300">
+                     <span className="w-3 h-3 bg-[#00A5B4]"></span>インプレッション数
+                   </div>
+                </div>
+                <div className="flex-1 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={enrichedTimeSeries} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#3A4056" vertical={false} />
+                      <XAxis 
+                        dataKey="dateFormatted" 
+                        stroke="#94A3B8" 
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={{ stroke: '#3A4056' }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis 
+                        yAxisId="left"
+                        stroke="#94A3B8" 
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) => `${v}%`}
+                      />
+                      <YAxis 
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="#94A3B8" 
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <RechartsTooltip 
+                        contentStyle={{ backgroundColor: '#1D212F', borderColor: '#3A4056', borderRadius: '8px', color: '#fff' }}
+                        itemStyle={{ color: '#E2E8F0', fontSize: '12px' }}
+                        labelStyle={{ color: '#94A3B8', marginBottom: '4px', fontSize: '12px' }}
+                      />
+                      <Bar yAxisId="right" dataKey="impressions" fill="#00A5B4" name="インプレッション数" />
+                      <Line yAxisId="left" type="linear" dataKey="engagementRate" stroke="#FF4E42" strokeWidth={2} dot={{ r: 4, fill: '#FF4E42', strokeWidth: 0 }} name="エンゲージメント率" />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* 【右側】 縦並び2段チャート */}
+              <div className="flex flex-col gap-6 h-[500px]">
+                
+                {/* 上段: 投稿数 */}
+                <div className="bg-[#282C3D] rounded-xl p-6 border border-[#3A4056] flex-1 flex flex-col">
+                  <div className="flex items-center gap-2 text-xs text-slate-300 justify-center mb-4">
+                     <span className="w-3 h-3 rounded-full bg-[#FF4E42]"></span>投稿数
+                  </div>
+                  <div className="flex-1 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={currentData?.timeseries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                      <LineChart data={enrichedTimeSeries} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#3A4056" vertical={false} />
                         <XAxis 
-                          dataKey="date" 
+                          dataKey="dateFormatted" 
                           stroke="#94A3B8" 
-                          fontSize={12}
+                          fontSize={10}
                           tickLine={false}
-                          axisLine={false}
-                          tickFormatter={(val) => val.split("-").slice(1).join("/")} 
+                          axisLine={{ stroke: '#3A4056' }}
+                          angle={-30}
+                          textAnchor="end"
                         />
-                        <YAxis 
-                          yAxisId="left"
-                          stroke="#94A3B8" 
-                          fontSize={12}
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <YAxis 
-                          yAxisId="right"
-                          orientation="right"
-                          stroke="#94A3B8" 
-                          fontSize={12}
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#1E293B', borderColor: '#334155', borderRadius: '8px', color: '#fff' }}
-                        />
-                        <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                        <Line 
-                          yAxisId="left"
-                          type="monotone" 
-                          dataKey="engagements" 
-                          stroke="#10B981" 
-                          strokeWidth={3}
-                          name="エンゲージメント"
-                          dot={false}
-                        />
-                        <Line 
-                          yAxisId="right"
-                          type="monotone" 
-                          dataKey="followers" 
-                          stroke="#8B5CF6" 
-                          strokeWidth={3}
-                          name="累計フォロワー"
-                          dot={false}
-                        />
+                        <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1D212F', borderColor: '#3A4056', borderRadius: '8px' }} />
+                        <Line type="linear" dataKey="posts" stroke="#FF4E42" strokeWidth={2} dot={{ r: 3, fill: '#FF4E42', strokeWidth: 0 }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
-              </>
-            )}
-          </div>
-        )}
 
+                {/* 下段: エンゲージメント内訳(スタックバー) */}
+                <div className="bg-[#282C3D] rounded-xl p-6 border border-[#3A4056] flex-1 flex flex-col">
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] text-slate-300 mb-4">
+                     <div className="flex items-center gap-1"><span className="w-3 h-3 bg-[#FF4E42]"></span>いいね数</div>
+                     <div className="flex items-center gap-1"><span className="w-3 h-3 bg-[#00A5B4]"></span>リツイート数</div>
+                     <div className="flex items-center gap-1"><span className="w-3 h-3 bg-[#E11D48]"></span>返信数</div>
+                     <div className="flex items-center gap-1"><span className="w-3 h-3 bg-[#F97316]"></span>URLクリック</div>
+                     <div className="flex items-center gap-1"><span className="w-3 h-3 bg-[#EAB308]"></span>プロフクリック</div>
+                  </div>
+                  <div className="flex-1 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={enrichedTimeSeries} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#3A4056" vertical={false} />
+                        <XAxis 
+                          dataKey="dateFormatted" 
+                          stroke="#94A3B8" 
+                          fontSize={10}
+                          tickLine={false}
+                          axisLine={{ stroke: '#3A4056' }}
+                          angle={-30}
+                          textAnchor="end"
+                        />
+                        <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} />
+                        <RechartsTooltip 
+                          contentStyle={{ backgroundColor: '#1D212F', borderColor: '#3A4056', borderRadius: '8px' }}
+                          itemStyle={{ fontSize: '11px' }}
+                        />
+                        <Bar dataKey="likes" stackId="a" fill="#FF4E42" name="いいね数" />
+                        <Bar dataKey="retweets" stackId="a" fill="#00A5B4" name="リツイート数" />
+                        <Bar dataKey="replies" stackId="a" fill="#E11D48" name="返信数" />
+                        <Bar dataKey="urlClicks" stackId="a" fill="#F97316" name="URLクリック数" />
+                        <Bar dataKey="profileClicks" stackId="a" fill="#EAB308" name="プロフィールクリック数" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
