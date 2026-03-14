@@ -19,6 +19,7 @@ export default function Sidebar() {
   const [customNodes, setCustomNodes] = useState<CustomNode[]>([]);
   
   const [openSections, setOpenSections] = useState({
+    input: true,
     trigger: true,
     ai: true,
     data: true,
@@ -67,6 +68,48 @@ export default function Sidebar() {
       </div>
 
       <div className="flex-1 space-y-5">
+        {/* ユーザー入力 */}
+        <div>
+          <button 
+            onClick={() => toggleSection('input')}
+            className="w-full flex items-center justify-between text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2 px-2 hover:text-slate-600 transition-colors"
+          >
+            <span>ユーザー入力</span>
+            {openSections.input ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </button>
+          {openSections.input && (
+            <div className="grid gap-1.5">
+              <Button 
+                variant="outline" 
+                className="justify-start gap-2 shadow-sm cursor-grab border-sky-200 hover:bg-sky-50 hover:border-sky-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
+                draggable
+                onDragStart={(e) => onDragStart(e, 'textInputNode', 'テキスト入力')}
+              >
+                <MessageSquare size={15} className="text-sky-500" />
+                テキスト入力
+              </Button>
+              <Button 
+                variant="outline" 
+                className="justify-start gap-2 shadow-sm cursor-grab border-violet-200 hover:bg-violet-50 hover:border-violet-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
+                draggable
+                onDragStart={(e) => onDragStart(e, 'imageInputNode', '画像入力')}
+              >
+                <ImageIcon size={15} className="text-violet-500" />
+                画像入力
+              </Button>
+              <Button 
+                variant="outline" 
+                className="justify-start gap-2 shadow-sm cursor-grab border-orange-200 hover:bg-orange-50 hover:border-orange-400 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
+                draggable
+                onDragStart={(e) => onDragStart(e, 'videoInputNode', '動画入力')}
+              >
+                <Video size={15} className="text-orange-500" />
+                動画入力
+              </Button>
+            </div>
+          )}
+        </div>
+
         {/* トリガー */}
         <div>
           <button 

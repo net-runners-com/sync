@@ -912,3 +912,152 @@ export const DynamicCustomNode = memo(({ id, data }: { id: string, data: any }) 
   );
 });
 DynamicCustomNode.displayName = 'DynamicCustomNode';
+
+// ============================================================
+// --- ユーザー入力ノード群 ---
+// ============================================================
+
+// --- テキスト入力ノード ---
+export const TextInputNode = memo(({ id, data }: { id: string, data: any }) => {
+  const [text, setText] = useState(data.text || '');
+
+  return (
+    <div className="bg-white dark:bg-slate-900 border-2 border-sky-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
+      <NodeHeader icon={MessageSquare} title="テキスト入力" gradient="from-sky-400 to-blue-500" nodeId={id} />
+      <div className="p-4 flex flex-col gap-3">
+        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">投稿するテキスト内容</label>
+        <textarea
+          placeholder="ここに投稿するテキストを直接入力してください..."
+          className="w-full text-sm p-3 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-sky-400 resize-none h-28 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            data.text = e.target.value;
+          }}
+        />
+        <div className="flex items-center justify-between text-[10px] text-slate-400">
+          <span>{text.length} 文字</span>
+          {text.length > 280 && (
+            <span className="text-amber-500 font-semibold">⚠ X(Twitter)は280文字以内推奨</span>
+          )}
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-sky-400 !border-2 !border-white" />
+    </div>
+  );
+});
+TextInputNode.displayName = 'TextInputNode';
+
+// --- 画像入力ノード ---
+export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => {
+  const [imageUrl, setImageUrl] = useState(data.imageUrl || '');
+  const [preview, setPreview] = useState(data.imageUrl || '');
+
+  const applyUrl = (url: string) => {
+    setPreview(url);
+    data.imageUrl = url;
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 border-2 border-violet-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
+      <NodeHeader icon={ImageIcon} title="画像入力" gradient="from-violet-400 to-purple-500" nodeId={id} />
+      <div className="p-4 flex flex-col gap-3">
+        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">画像URL</label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="https://example.com/image.jpg"
+            className="flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-violet-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            onBlur={() => applyUrl(imageUrl)}
+          />
+          <button
+            onClick={() => applyUrl(imageUrl)}
+            className="px-3 py-1.5 bg-violet-500 hover:bg-violet-600 text-white text-xs font-bold rounded-lg transition-colors"
+          >
+            適用
+          </button>
+        </div>
+        {preview ? (
+          <div className="relative w-full h-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+            <img
+              src={preview}
+              alt="preview"
+              className="w-full h-full object-cover"
+              onError={() => setPreview('')}
+            />
+          </div>
+        ) : (
+          <div className="w-full h-32 rounded-lg border-2 border-dashed border-violet-200 dark:border-violet-800 flex items-center justify-center text-violet-400 text-xs">
+            <div className="text-center">
+              <ImageIcon size={24} className="mx-auto mb-1 opacity-50" />
+              <span>URLを入力してプレビュー</span>
+            </div>
+          </div>
+        )}
+        <p className="text-[10px] text-slate-400">※ 外部URL形式で指定してください</p>
+      </div>
+      <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white" />
+    </div>
+  );
+});
+ImageInputNode.displayName = 'ImageInputNode';
+
+// --- 動画入力ノード ---
+export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => {
+  const [videoUrl, setVideoUrl] = useState(data.videoUrl || '');
+  const [preview, setPreview] = useState(data.videoUrl || '');
+
+  const applyUrl = (url: string) => {
+    setPreview(url);
+    data.videoUrl = url;
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 border-2 border-orange-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
+      <NodeHeader icon={Video} title="動画入力" gradient="from-orange-400 to-red-500" nodeId={id} />
+      <div className="p-4 flex flex-col gap-3">
+        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">動画URL</label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="https://example.com/video.mp4"
+            className="flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-orange-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            onBlur={() => applyUrl(videoUrl)}
+          />
+          <button
+            onClick={() => applyUrl(videoUrl)}
+            className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-lg transition-colors"
+          >
+            適用
+          </button>
+        </div>
+        {preview ? (
+          <video
+            src={preview}
+            controls
+            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 max-h-40"
+            onError={() => setPreview('')}
+          />
+        ) : (
+          <div className="w-full h-24 rounded-lg border-2 border-dashed border-orange-200 dark:border-orange-800 flex items-center justify-center text-orange-400 text-xs">
+            <div className="text-center">
+              <Video size={24} className="mx-auto mb-1 opacity-50" />
+              <span>URLを入力してプレビュー</span>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-1 mt-1">
+          {['TikTok', 'Instagram リール', 'YouTube Shorts'].map(p => (
+            <span key={p} className="text-[10px] bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-700">{p}</span>
+          ))}
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-orange-400 !border-2 !border-white" />
+    </div>
+  );
+});
+VideoInputNode.displayName = 'VideoInputNode';
