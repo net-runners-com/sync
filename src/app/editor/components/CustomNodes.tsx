@@ -1,10 +1,11 @@
 import React, { memo, useState, useEffect } from 'react';
 import { Handle, Position, useReactFlow } from '@xyflow/react';
-import { 
-  Clock, MessageSquare, Image as ImageIcon, Twitter, Instagram, 
+import {
+  Clock, MessageSquare, Image as ImageIcon, Twitter, Instagram,
   Smartphone, GitBranch, Video, BarChart3, Facebook, Trash2, Upload,
   X as XIcon, Calendar, PenTool, Database, LogIn, Box, FileText, Music
 } from 'lucide-react';
+import { toast } from "sonner";
 
 const NodeHeader = ({ icon: Icon, title, gradient, nodeId }: { icon: any, title: string, gradient: string, nodeId: string }) => {
   const { setNodes } = useReactFlow();
@@ -20,7 +21,7 @@ const NodeHeader = ({ icon: Icon, title, gradient, nodeId }: { icon: any, title:
         <Icon size={16} className="text-white" />
         <span className="font-bold text-sm text-white">{title}</span>
       </div>
-      <button 
+      <button
         onClick={onDelete}
         className="text-white/70 hover:text-white hover:bg-white/20 p-1 rounded transition-colors"
         title="ノードを削除"
@@ -100,13 +101,13 @@ export const TextAiNode = memo(({ id, data }: { id: string, data: any }) => {
           <div className="flex items-center justify-between">
             <label className="text-[10px] text-slate-500 font-semibold uppercase">プロンプト</label>
             <div className="flex bg-slate-100 p-0.5 rounded-md">
-              <button 
+              <button
                 onClick={() => setPromptMode('text')}
                 className={`text-[9px] px-2 py-0.5 rounded-sm font-bold transition-colors ${promptMode === 'text' ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 TEXT
               </button>
-              <button 
+              <button
                 onClick={() => setPromptMode('json')}
                 className={`text-[9px] px-2 py-0.5 rounded-sm font-bold transition-colors ${promptMode === 'json' ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
               >
@@ -160,17 +161,17 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
       <NodeHeader icon={ImageIcon} title="画像生成 AI" gradient="from-fuchsia-500 to-pink-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
         <div className="text-sm font-medium text-slate-700">{data.label || 'DALL-E 3 生成'}</div>
-        
+
         <div className="border-2 border-dashed border-fuchsia-200 rounded-md p-3 flex flex-col items-center justify-center gap-2 bg-fuchsia-50/50 cursor-pointer hover:bg-fuchsia-50 transition-colors">
           <Upload size={16} className="text-fuchsia-400" />
           <span className="text-[10px] text-fuchsia-600 font-medium text-center">
             参照画像を追加<br/>(i2i / ControlNet)
           </span>
         </div>
-        
+
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 font-semibold uppercase">モデル</label>
-          <select 
+          <select
             className="w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-fuchsia-50 text-fuchsia-700 focus:outline-none focus:border-fuchsia-400 cursor-pointer font-medium"
             defaultValue={data.model || 'dall-e-3'}
             onChange={(e) => {}}
@@ -182,7 +183,7 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 font-semibold uppercase">サイズ</label>
-          <select 
+          <select
             className="w-full text-xs p-1.5 border border-fuchsia-200 rounded-md bg-white text-slate-700 focus:outline-none focus:border-fuchsia-400 cursor-pointer"
             defaultValue={data.size || '1024x1024'}
             onChange={(e) => {}}
@@ -194,8 +195,8 @@ export const ImageAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 font-semibold uppercase">カスタムプロンプト</label>
-          <textarea 
-            placeholder="画像の詳細な作成指示を入力..." 
+          <textarea
+            placeholder="画像の詳細な作成指示を入力..."
             className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-fuchsia-500 resize-none h-16"
             defaultValue={data.customPrompt || ''}
           />
@@ -225,7 +226,7 @@ export const VideoAiNode = memo(({ id, data }: { id: string, data: any }) => {
 
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 font-semibold uppercase">エンジン</label>
-          <select 
+          <select
             className="w-full text-xs p-1.5 border border-rose-200 rounded-md bg-rose-50 text-rose-700 focus:outline-none focus:border-rose-400 cursor-pointer font-medium"
             defaultValue={data.engine || 'runway-gen3'}
             onChange={(e) => {}}
@@ -237,8 +238,8 @@ export const VideoAiNode = memo(({ id, data }: { id: string, data: any }) => {
         </div>
         <div className="flex flex-col gap-1 mt-1">
           <label className="text-[10px] text-slate-500 font-semibold uppercase">カスタムプロンプト</label>
-          <textarea 
-            placeholder="カメラワークや被写体の動きを入力..." 
+          <textarea
+            placeholder="カメラワークや被写体の動きを入力..."
             className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-rose-500 resize-none h-16"
             defaultValue={data.customPrompt || ''}
           />
@@ -258,13 +259,13 @@ export const AnalyzerNode = memo(({ id, data }: { id: string, data: any }) => {
       <NodeHeader icon={BarChart3} title="インサイト分析" gradient="from-teal-500 to-emerald-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
         <div className="text-sm font-medium text-slate-700">{data.label || '感情・競合分析'}</div>
-        
+
         {/* URL / ユーザーID 入力UI */}
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 font-semibold uppercase">ターゲット (ユーザーID等)</label>
-          <input 
-            type="text" 
-            placeholder="@elonmusk, #topic" 
+          <input
+            type="text"
+            placeholder="@elonmusk, #topic"
             className="w-full text-xs p-2 border border-slate-200 rounded-md focus:outline-none focus:border-teal-500"
             defaultValue={data.target || ''}
             onChange={(e) => {
@@ -299,19 +300,19 @@ export const IfElseNode = memo(({ id, data }: { id: string, data: any }) => {
           <span className="text-red-500 font-bold flex items-center gap-1">❌ False</span>
         </div>
       </div>
-      <Handle 
-        type="source" 
-        position={Position.Bottom} 
-        id="true" 
-        className="!w-3 !h-3 !bg-green-500 !border-2 !border-white" 
-        style={{ left: '30%' }} 
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="true"
+        className="!w-3 !h-3 !bg-green-500 !border-2 !border-white"
+        style={{ left: '30%' }}
       />
-      <Handle 
-        type="source" 
-        position={Position.Bottom} 
-        id="false" 
-        className="!w-3 !h-3 !bg-red-500 !border-2 !border-white" 
-        style={{ left: '70%' }} 
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="false"
+        className="!w-3 !h-3 !bg-red-500 !border-2 !border-white"
+        style={{ left: '70%' }}
       />
     </div>
   );
@@ -407,35 +408,23 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
               )}
             </select>
           </div>
-          
+
           {checkingAuth ? (
             <div className="mt-1 text-center text-xs text-slate-400 py-2">確認中...</div>
-          ) : isConnected ? (
-            <button 
-              className="w-full mt-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1 border border-slate-200 shadow-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsPreviewOpen(true);
-              }}
-            >
-              プレビューを確認
-            </button>
           ) : (
-            <div className="mt-1 flex flex-col gap-2">
-              <div className="text-[10px] text-red-500 font-semibold bg-red-50 p-1.5 rounded border border-red-100 text-center">
-                未連携: {data.platformName || 'SNS'}との連携が必要です
-              </div>
-              <button 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-xs font-semibold transition-colors flex items-center justify-center gap-1 shadow-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // 設定ページへ遷移して連携させる
-                  window.open('/dashboard/settings', '_blank');
-                }}
-              >
-                <LogIn size={14} />
-                設定から連携する
-              </button>
+            <div className="mt-3 flex items-center justify-between text-xs border border-slate-200 rounded p-2 bg-slate-50">
+              <span className="text-slate-500 flex items-center gap-1">
+                <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-400"}`}></span>
+                {isConnected ? "連携済み" : "未連携"}
+              </span>
+              {!isConnected && (
+                <button
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                  onClick={() => toast.info("設定画面からアカウントを連携してください")}
+                >
+                  連携する
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -443,20 +432,20 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
 
       {/* プレビューモーダル */}
       {isPreviewOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm shadow-2xl"
           onClick={(e) => {
             e.stopPropagation();
             setIsPreviewOpen(false);
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl w-[400px] overflow-hidden flex flex-col animate-in fade-in zoom-in-95"
             onClick={(e) => e.stopPropagation()}
           >
             <div className={`px-4 py-3 flex items-center justify-between border-b border-slate-100 ${
-              data.platform === 'x' ? 'bg-slate-900 text-white' : 
-              data.platform === 'instagram' ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white' : 
+              data.platform === 'x' ? 'bg-slate-900 text-white' :
+              data.platform === 'instagram' ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white' :
               'bg-blue-600 text-white'
             }`}>
               <div className="flex items-center gap-2 font-bold text-sm">
@@ -467,7 +456,7 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
                 <XIcon size={18} />
               </button>
             </div>
-            
+
             <div className="p-5 bg-slate-50">
               {/* モックプレビュー画面 */}
               <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
@@ -504,7 +493,7 @@ export const PostGenerationAiNode = memo(({ id, data }: { id: string, data: any 
         <div className="text-sm font-medium text-slate-700">{data.label || 'ターゲット層向けに投稿作成'}</div>
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 font-semibold uppercase">ターゲットSNS</label>
-          <select 
+          <select
             className="w-full text-xs p-1.5 border border-indigo-200 rounded-md bg-indigo-50 text-indigo-700 focus:outline-none focus:border-indigo-400 cursor-pointer font-medium"
             defaultValue={data.targetPlatform || 'instagram'}
             onChange={(e) => {}}
@@ -515,8 +504,8 @@ export const PostGenerationAiNode = memo(({ id, data }: { id: string, data: any 
             <option value="tiktok">TikTok</option>
           </select>
         </div>
-        <textarea 
-          placeholder="口調やフォーマットの指示（例：絵文字多め、Z世代風）" 
+        <textarea
+          placeholder="口調やフォーマットの指示（例：絵文字多め、Z世代風）"
           className="w-full text-xs p-2 border border-slate-200 rounded-md mt-1 focus:outline-none focus:border-indigo-500 resize-none h-16"
           defaultValue={data.promptStyle || ''}
         />
@@ -534,20 +523,20 @@ export const PreviewNode = memo(({ id, data }: { id: string, data: any }) => {
       <NodeHeader icon={ImageIcon} title="AI出力プレビュー" gradient="from-emerald-500 to-teal-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
         <div className="text-sm font-medium text-slate-700">{data.label || '生成結果の確認'}</div>
-        
+
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 min-h-[120px] flex flex-col items-center justify-center text-slate-400 text-xs text-center break-words">
           {data.previewContent ? (
             <div className="w-full text-left flex flex-col gap-2">
               <div className="flex justify-between items-center px-1">
                 <span className="text-[10px] text-slate-500 font-semibold">生成テキスト</span>
-                <button 
-                  onClick={() => {}} 
+                <button
+                  onClick={() => {}}
                   className="text-[10px] text-blue-500 hover:text-blue-600 font-medium px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50"
                 >
                   編集を確定
                 </button>
               </div>
-              <textarea 
+              <textarea
                 className="w-full text-sm text-slate-700 bg-white border border-slate-200 rounded p-2 focus:outline-none focus:border-emerald-500 resize-y min-h-[100px]"
                 defaultValue={data.previewContent}
                 onChange={(e) => {}}
@@ -570,15 +559,51 @@ PreviewNode.displayName = 'PreviewNode';
 
 // --- 新規追加: Google Driveノード ---
 export const DriveNode = memo(({ id, data }: { id: string, data: any }) => {
+  const [isConnected, setIsConnected] = useState<boolean>(data.isAuthenticated ?? false);
+  const [checkingAuth, setCheckingAuth] = useState(false);
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      setCheckingAuth(true);
+      try {
+        const res = await fetch('/api/user/google-accounts'); // 仮のAPIエンドポイント
+        if (res.ok) {
+          const d = await res.json();
+          setIsConnected(d.accounts?.googleDrive?.hasToken ?? false);
+        }
+      } catch {}
+      setCheckingAuth(false);
+    };
+    checkConnection();
+  }, []);
+
   return (
     <div className="bg-white border-2 border-green-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-green-400 !border-2 !border-white" />
       <NodeHeader icon={Database} title="Google Drive/Sheets" gradient="from-green-500 to-emerald-600" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
         <div className="text-sm font-medium text-slate-700">{data.label || 'データを保存・取得'}</div>
+        {checkingAuth ? (
+          <div className="mt-1 text-center text-xs text-slate-400 py-2">確認中...</div>
+        ) : (
+          <div className="mt-3 flex items-center justify-between text-xs border border-slate-200 rounded p-2 bg-slate-50">
+            <span className="text-slate-500 flex items-center gap-1">
+              <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-400"}`}></span>
+              {isConnected ? "連携済み" : "未連携"}
+            </span>
+            {!isConnected && (
+              <button
+                className="text-blue-600 hover:text-blue-800 font-medium"
+                onClick={() => toast.info("設定画面からGoogleアカウントを連携してください")}
+              >
+                連携する
+              </button>
+            )}
+          </div>
+        )}
         <div className="flex flex-col gap-1">
           <label className="text-[10px] text-slate-500 font-semibold uppercase">アクション</label>
-          <select 
+          <select
             className="w-full text-xs p-1.5 border border-green-200 rounded-md bg-green-50 text-green-700 focus:outline-none focus:border-green-400 cursor-pointer font-medium"
             defaultValue={data.action || 'read-sheet'}
             onChange={(e) => {}}

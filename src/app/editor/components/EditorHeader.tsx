@@ -6,6 +6,7 @@ import { Play, Save, Settings, X, LogIn, LogOut, User, LayoutDashboard, Edit2 } 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
 import { useReactFlow } from "@xyflow/react";
 
 interface EditorHeaderProps {
@@ -44,13 +45,13 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
       if (res.ok) {
         const data = await res.json();
         setWorkflowId(data.id);
-        alert("ワークフローを保存しました");
+        toast.success("ワークフローを保存しました");
       } else {
-        alert("保存に失敗しました");
+        toast.error("保存に失敗しました");
       }
     } catch (err) {
       console.error(err);
-      alert("保存中にエラーが発生しました");
+      toast.error("保存中にエラーが発生しました");
     } finally {
       setIsSaving(false);
     }
@@ -58,7 +59,7 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
 
   const handleExecute = async () => {
     if (!workflowId) {
-      alert("先にワークフローを保存してください");
+      toast.error("先にワークフローを保存してください");
       return;
     }
     
@@ -71,13 +72,15 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
       });
 
       if (res.ok) {
-        alert("バックグラウンド実行をキューに追加しました");
+        toast.success("バックグラウンド実行をキューに追加しました", {
+          description: "ダッシュボードで進捗を確認できます。"
+        });
       } else {
-        alert("実行の開始に失敗しました");
+        toast.error("実行の開始に失敗しました");
       }
     } catch (err) {
       console.error(err);
-      alert("実行中にエラーが発生しました");
+      toast.error("実行中にエラーが発生しました");
     } finally {
       setIsExecuting(false);
     }

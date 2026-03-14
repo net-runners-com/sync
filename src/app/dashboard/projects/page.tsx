@@ -7,6 +7,7 @@ import {
   ChevronRight, Globe, Lock,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Workflow = {
   id: string;
@@ -390,8 +391,10 @@ export default function ProjectsPage() {
 
         {/* ワークフロー一覧 */}
         {loading ? (
-          <div className="flex items-center justify-center py-32">
-            <Loader2 size={36} className="animate-spin text-blue-500" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-40 w-full rounded-2xl bg-slate-200/60" />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-5 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300">

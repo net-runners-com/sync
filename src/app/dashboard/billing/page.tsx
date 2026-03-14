@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Check, Zap, Building2, CreditCard } from "lucide-react";
+import { toast } from "sonner";
 
 export default function BillingPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
@@ -19,12 +20,12 @@ export default function BillingPage() {
         // Stripeの決済画面へリダイレクト
         window.location.href = data.url;
       } else {
-        alert("決済の初期化に失敗しました。");
+        toast.error("決済の初期化に失敗しました。");
         setIsLoading(null);
       }
     } catch (err) {
       console.error(err);
-      alert("エラーが発生しました。");
+      toast.error("エラーが発生しました。");
       setIsLoading(null);
     }
   };

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { Download, Search, LayoutGrid, Loader2, User, Clock, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface PublicWorkflow {
   id: string;
@@ -57,11 +59,13 @@ export default function MarketplacePage() {
       });
       if (!res.ok) throw new Error("Import failed");
       const data = await res.json();
-      alert("インポートが完了しました！マイプロジェクトから確認できます。");
+      toast.success("インポートが完了しました！", {
+        description: "マイプロジェクトから確認できます。"
+      });
       router.push("/dashboard/projects");
     } catch (err) {
       console.error(err);
-      alert("インポートに失敗しました。");
+      toast.error("インポートに失敗しました。");
     } finally {
       setImportingId(null);
     }
@@ -104,9 +108,10 @@ export default function MarketplacePage() {
       <main className="flex-1 overflow-auto p-8">
         <div className="max-w-6xl mx-auto">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <Loader2 className="animate-spin mb-4" size={32} />
-              <p>ワークフローを読み込み中...</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-48 w-full rounded-2xl bg-slate-200/60" />
+              ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">

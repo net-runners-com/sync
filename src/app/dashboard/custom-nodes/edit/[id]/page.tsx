@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Plus, Trash2, Settings, Box, Play, Layout, AlignLeft, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface NodeInput {
   id: string;
@@ -87,10 +88,10 @@ export default function CustomNodeEditPage({ params }: { params: Promise<{ id: s
         }),
       });
       if (!res.ok) throw new Error("Save failed");
-      alert("保存しました");
+      toast.success("保存しました");
     } catch (error) {
       console.error(error);
-      alert("保存に失敗しました");
+      toast.error("保存に失敗しました");
     } finally {
       setSaving(false);
     }

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Twitter, Instagram, Facebook, Link as LinkIcon, CheckCircle2, AlertCircle, Loader2, LogOut, Sun, Moon, Monitor } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useTheme } from "@/lib/ThemeContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SocialAccountStatus {
   connected: boolean;
@@ -85,13 +86,14 @@ export default function SettingsPage() {
       id: "twitter",
       name: "X (Twitter)",
       icon: <Twitter className="w-6 h-6 text-slate-800" fill="currentColor" />,
-      description: "ツイート自動化・AIリプライ機能を有効にします。（近日公開予定）",
+      description: "ツイート自動化機能を利用して、投稿をスケジューリングできます。",
       connected: socialAccounts.twitter?.connected || false,
       hasToken: socialAccounts.twitter?.hasToken || false,
       color: "bg-slate-100",
       borderColor: "border-slate-200",
       accentColor: "bg-slate-800 hover:bg-slate-900",
-      disabled: true,
+      note: "X開発者ポータルでアプリを作成し、環境変数を設定してください。",
+      disabled: false,
     },
   ];
 
@@ -149,9 +151,10 @@ export default function SettingsPage() {
         {/* SNS連携リスト */}
         <div className="flex flex-col gap-4">
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-slate-400">
-              <Loader2 className="animate-spin mr-2" size={24} />
-              <span>連携状況を確認中...</span>
+            <div className="flex flex-col gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-2xl bg-slate-200/60" />
+              ))}
             </div>
           ) : (
             platforms.map((platform, index) => (
