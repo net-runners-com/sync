@@ -193,20 +193,84 @@ async function postToInstagram(userAccessToken: string, message: string, imageUr
 }
 
 /**
+ * Threadsアカウントに投稿する (Threads API経由 - 仮実装)
+ */
+async function postToThreads(userAccessToken: string, message: string, imageUrl?: string | null): Promise<{ success: boolean; mediaId?: string; error?: string }> {
+  // 実際のThreads APIは https://graph.threads.net/ を使用し、事前にThreadsプロフィールへの連携が必要になります。
+  // ここではInstagram(Facebook)と同じアクセストークンを流用する前提の仮実装とします。
+  try {
+    const threadsApiUrl = 'https://graph.threads.net/v1.0';
+    
+    // Step1: ThreadsのユーザーIDを取得
+    const meRes = await fetch(`${threadsApiUrl}/me?access_token=${userAccessToken}`);
+    const meData = await meRes.json();
+    
+    if (meData.error) {
+       // トークンエラー時はFallbackとしてInstagram向けの連携を促す
+       return { success: false, error: "Threadsアカウントが見つかりません。Instagramアカウント経由でThreadsとの連携が必要です: " + meData.error.message };
+    }
+    
+    const threadsUserId = meData.id;
+    
+    // Step2: Threadsのメディアコンテナを作成
+    const containerBody: Record<string, string> = {
+      media_type: imageUrl ? "IMAGE" : "TEXT",
+      text: message,
+      access_token: userAccessToken,
+    };
+    
+    if (imageUrl) {
+      containerBody.image_url = imageUrl;
+    }
+    
+    const createRes = await fetch(`${threadsApiUrl}/${threadsUserId}/threads`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(containerBody),
+    });
+    
+    const createData = await createRes.json();
+    if (createData.error) {
+      return { success: false, error: createData.error.message };
+    }
+    
+    const creationId = createData.id;
+    
+    // Step3: コンテナを発行（投稿公開）
+    const publishRes = await fetch(`${threadsApiUrl}/${threadsUserId}/threads_publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ creation_id: creationId, access_token: userAccessToken }),
+    });
+    
+    const publishData = await publishRes.json();
+    if (publishData.error) {
+      return { success: false, error: publishData.error.message };
+    }
+    
+    return { success: true, mediaId: publishData.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * SNSプラットフォームへの投稿メイン関数
  */
 export async function postToSNS(
   userId: string,
-  platform: "twitter" | "instagram" | "facebook",
+  platform: "twitter" | "instagram" | "facebook" | "threads",
   message: string,
   imageUrl?: string | null,
   accountId?: string
 ): Promise<{ success: boolean; platform: string; data?: any; error?: string }> {
   // DBからユーザーのOAuthアクセストークンを取得
+  // Threadsの場合はInstagram/Facebookのトークンを利用（または専用プロバイダー）
+  const dbProvider = platform === "instagram" || platform === "threads" ? "facebook" : platform;
   const account = await prisma.account.findFirst({
     where: {
       userId,
-      provider: platform === "instagram" ? "facebook" : platform, // InstagramはFacebook経由で認証
+      provider: dbProvider,
       ...(accountId ? { providerAccountId: accountId } : {})
     },
   });
@@ -215,7 +279,7 @@ export async function postToSNS(
     return {
       success: false,
       platform,
-      error: `[${platform}] 認証情報が見つかりません。設定画面から${platform === "facebook" ? "Facebook" : platform === "instagram" ? "Instagram (Facebook)" : "Twitter"}と連携してください。`,
+      error: `[${platform}] 認証情報が見つかりません。設定画面から${platform === "facebook" ? "Facebook" : platform === "instagram" ? "Instagram (Facebook)" : platform === "threads" ? "Threads" : "Twitter"}と連携してください。`,
     };
   }
 
@@ -250,6 +314,16 @@ export async function postToSNS(
       
       case "instagram": {
         const result = await postToInstagram(accessToken, message, imageUrl);
+        return {
+          success: result.success,
+          platform,
+          data: { mediaId: result.mediaId },
+          error: result.error,
+        };
+      }
+      
+      case "threads": {
+        const result = await postToThreads(accessToken, message, imageUrl);
         return {
           success: result.success,
           platform,

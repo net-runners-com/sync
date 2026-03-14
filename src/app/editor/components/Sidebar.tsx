@@ -319,6 +319,16 @@ export default function Sidebar() {
               </Button>
               <Button 
                 variant="outline" 
+                className="justify-start gap-2 shadow-sm cursor-grab border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
+                draggable
+                onDragStart={(e) => onDragStart(e, 'socialActionNode', 'Threadsに投稿', { platform: 'threads', platformName: 'Threads' })}
+              >
+                {/* Threads用のアイコンとして一旦 AtSign を利用 */}
+                <span className="font-bold text-lg leading-none -mt-1">@</span>
+                Threads
+              </Button>
+              <Button 
+                variant="outline" 
                 className="justify-start gap-2 shadow-sm cursor-grab border-emerald-300 hover:bg-emerald-50 hover:border-emerald-500 transition-all text-sm h-9 text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
                 draggable
                 onDragStart={(e) => onDragStart(e, 'noteNode', 'noteに投稿')}

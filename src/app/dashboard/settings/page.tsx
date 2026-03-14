@@ -218,14 +218,16 @@ export default function SettingsPage() {
                   {isConnected && (
                     <div className="mt-5 w-full">
                       <div className="flex flex-col gap-2 bg-slate-50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800/80">
-                        {platform.accounts.map((acc, aIdx) => (
-                           <div key={aIdx} className="flex items-center justify-between py-2 px-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-                             <div className="flex items-center gap-3">
-                               <CheckCircle2 size={18} className="text-green-500" />
-                               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                 連携アカウント
-                               </span>
-                               <span className="text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                        {platform.accounts.map((acc: any, aIdx: number) => (
+                           <div key={aIdx} className="flex flex-col py-2 px-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+                             <div className="flex items-center justify-between">
+                               <div className="flex items-center gap-3">
+                                 <CheckCircle2 size={18} className="text-green-500 flex-shrink-0" />
+                                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                   {acc.accountName || `アカウント (${acc.accountId})`}
+                                 </span>
+                               </div>
+                               <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded-full select-all">
                                  ID: {acc.accountId}
                                </span>
                              </div>

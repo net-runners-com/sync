@@ -74,18 +74,47 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account && profile) {
+        try {
+          // Twitterの場合は usernameまたはname、Facebook/InstaやGoogleは name を fallback として保存
+          const accountName = (profile as any).username || profile.name || (profile as any).email || "Unknown Account";
+          
+          // 非同期でアカウント名（ユーザー名）を session_state に保存する
+          // NextAuth が DB に Account を作成・更新した後に反映されるよう、少し遅延させる
+          setTimeout(async () => {
+            try {
+              await prisma.account.updateMany({
+                where: {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                },
+                data: {
+                  session_state: accountName,
+                },
+              });
+            } catch (updateErr) {
+              console.error("Failed to update account name in session_state", updateErr);
+            }
+          }, 2000);
+          
+        } catch (e) {
+          console.error("Failed to extract profile name", e);
+        }
+      }
+      return true;
+    },
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
       }
       return session;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.userId = user.id;
       }
       if (account) {
-        // アクセストークンとプロバイダー情報をJWTに保存
         token.accessToken = account.access_token;
         token.provider = account.provider;
         token.providerAccountId = account.providerAccountId;

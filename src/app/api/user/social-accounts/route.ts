@@ -18,11 +18,14 @@ export async function GET() {
         providerAccountId: true,
         access_token: true,
         scope: true,
+        token_type: true,
+        session_state: true,
+        id_token: true,
       },
     });
 
     // プロバイダーごとに連携済みアカウントリストをまとめる
-    const socialAccounts: Record<string, { accountId: string; hasToken: boolean; scope?: string | null }[]> = {
+    const socialAccounts: Record<string, { accountId: string; accountName?: string; hasToken: boolean; scope?: string | null }[]> = {
       facebook: [],
       instagram: [],
       twitter: [],
@@ -33,6 +36,7 @@ export async function GET() {
       if (socialAccounts[account.provider]) {
         socialAccounts[account.provider].push({
           accountId: account.providerAccountId,
+          accountName: account.session_state || undefined, // session_stateに保存した名前を返す
           hasToken: !!account.access_token,
           scope: account.scope,
         });

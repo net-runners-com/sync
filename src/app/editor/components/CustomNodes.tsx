@@ -3,7 +3,7 @@ import { Handle, Position, useReactFlow, NodeResizer } from '@xyflow/react';
 import {
   Clock, MessageSquare, Image as ImageIcon, Twitter, Instagram,
   Smartphone, GitBranch, Video, BarChart3, Facebook, Trash2, Upload,
-  X as XIcon, Calendar, PenTool, Database, LogIn, Box, FileText, Music
+  X as XIcon, Calendar, PenTool, Database, LogIn, Box, FileText, Music, MessageCircle
 } from 'lucide-react';
 import { toast } from "sonner";
 
@@ -317,7 +317,7 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
   const { setNodes } = useReactFlow();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(false);
-  const [accounts, setAccounts] = useState<{accountId: string; hasToken: boolean}[]>([]);
+  const [accounts, setAccounts] = useState<{accountId: string; accountName?: string; hasToken: boolean}[]>([]);
   const isConnected = accounts.length > 0;
 
   useEffect(() => {
@@ -348,13 +348,15 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
       case 'x': return Twitter;
       case 'instagram': return Instagram;
       case 'facebook': return Facebook;
+      case 'threads': return MessageCircle; // Threadsの代用
       default: return Smartphone;
     }
   };
 
   const getGradient = () => {
     switch (data.platform) {
-      case 'x': return 'from-slate-700 to-slate-900';
+      case 'x': 
+      case 'threads': return 'from-slate-700 to-slate-900';
       case 'instagram': return 'from-pink-500 to-purple-600';
       case 'facebook': return 'from-blue-600 to-blue-800';
       default: return 'from-slate-500 to-slate-700';
@@ -363,7 +365,8 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
 
   const getBorderColor = () => {
     switch (data.platform) {
-      case 'x': return 'border-slate-800';
+      case 'x':
+      case 'threads': return 'border-slate-800';
       case 'instagram': return 'border-pink-500';
       case 'facebook': return 'border-blue-600';
       default: return 'border-slate-400';
@@ -374,7 +377,7 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
     <>
       <div className={`bg-white dark:bg-slate-900 border-2 ${getBorderColor()} rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl`}>
         <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-slate-400 !border-2 !border-white" />
-        <NodeHeader icon={getIcon()} title={`SNS投稿: ${data.platformName || 'X (Twitter)'}`} gradient={getGradient()} nodeId={id} />
+        <NodeHeader icon={getIcon()} title={`SNS投稿: ${data.platformName || (data.platform === 'threads' ? 'Threads' : 'X (Twitter)')}`} gradient={getGradient()} nodeId={id} />
         <div className="p-4 flex flex-col gap-3">
           <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'テキストと画像を投稿'}</div>
 
@@ -390,6 +393,10 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
                   <option value="tweet">ツイート</option>
                   <option value="thread">スレッド</option>
                   <option value="quote">引用ツイート</option>
+                </>
+              ) : data.platform === 'threads' ? (
+                <>
+                  <option value="thread">Threads 投稿</option>
                 </>
               ) : data.platform === 'facebook' ? (
                 <>
@@ -422,7 +429,7 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
               >
                 {accounts.map(acc => (
                   <option key={acc.accountId} value={acc.accountId}>
-                    ID: {acc.accountId}
+                    {acc.accountName || `アカウント (${acc.accountId})`}
                   </option>
                 ))}
               </select>
@@ -433,8 +440,8 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
                   連携がありません
                 </span>
                 <button
-                  className="text-blue-600 hover:text-blue-800 underline"
-                  onClick={() => toast.info("設定画面からアカウントを連携してください")}
+                   className="text-blue-600 hover:text-blue-800 underline"
+                   onClick={() => toast.info("設定画面からアカウントを連携してください")}
                 >
                   設定へ
                 </button>
@@ -458,13 +465,13 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
             onClick={(e) => e.stopPropagation()}
           >
             <div className={`px-4 py-3 flex items-center justify-between border-b border-slate-100 ${
-              data.platform === 'x' ? 'bg-slate-900 text-white' :
+              (data.platform === 'x' || data.platform === 'threads') ? 'bg-slate-900 text-white' :
               data.platform === 'instagram' ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white' :
               'bg-blue-600 text-white'
             }`}>
               <div className="flex items-center gap-2 font-bold text-sm">
                 {React.createElement(getIcon(), { size: 16 })}
-                <span>{data.platformName || 'X (Twitter)'} プレビュー</span>
+                <span>{data.platformName || (data.platform === 'threads' ? 'Threads' : 'X (Twitter)')} プレビュー</span>
               </div>
               <button onClick={() => setIsPreviewOpen(false)} className="hover:bg-white dark:bg-slate-900/20 p-1 rounded transition-colors">
                 <XIcon size={18} />

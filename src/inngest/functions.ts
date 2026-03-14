@@ -65,14 +65,14 @@ export const executeWorkflow = inngest.createFunction(
         const platform = snsNode.data?.platform || "twitter";
         const snsPlatform = platform === "x" ? "twitter" : platform;
 
-        if (!snsPlatform || !["twitter", "facebook", "instagram"].includes(snsPlatform)) {
+        if (!snsPlatform || !["twitter", "facebook", "instagram", "threads"].includes(snsPlatform)) {
           results.push({ platform: snsPlatform, success: false, error: "未対応のプラットフォーム" });
           continue;
         }
 
         const result = await postToSNS(
           userId as string,
-          snsPlatform as "twitter" | "facebook" | "instagram",
+          snsPlatform as "twitter" | "facebook" | "instagram" | "threads",
           generatedContent.text as string,
           generatedContent.imageUrl,
           snsNode.data?.accountId // 特定の連携アカウントIDがある場合は渡す
