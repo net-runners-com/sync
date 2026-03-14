@@ -942,6 +942,7 @@ export const TextInputNode = memo(({ id, data }: { id: string, data: any }) => {
           )}
         </div>
       </div>
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-sky-400 !border-2 !border-white" />
       <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-sky-400 !border-2 !border-white" />
     </div>
   );
@@ -998,6 +999,7 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
         )}
         <p className="text-[10px] text-slate-400">※ 外部URL形式で指定してください</p>
       </div>
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white" />
       <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white" />
     </div>
   );
@@ -1056,6 +1058,7 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
           ))}
         </div>
       </div>
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-orange-400 !border-2 !border-white" />
       <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-orange-400 !border-2 !border-white" />
     </div>
   );

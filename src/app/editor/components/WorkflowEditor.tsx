@@ -103,9 +103,18 @@ const initialEdges: Edge[] = [
 interface WorkflowEditorProps {
   initialNodes?: any[];
   initialEdges?: Edge[];
+  isExecuting?: boolean;
+  executingNodeIds?: string[];
+  completedNodeIds?: string[];
 }
 
-export default function WorkflowEditor({ initialNodes: propNodes, initialEdges: propEdges }: WorkflowEditorProps = {}) {
+export default function WorkflowEditor({
+  initialNodes: propNodes,
+  initialEdges: propEdges,
+  isExecuting = false,
+  executingNodeIds = [],
+  completedNodeIds = [],
+}: WorkflowEditorProps = {}) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(propNodes && propNodes.length > 0 ? propNodes : initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(propEdges && propEdges.length > 0 ? propEdges : initialEdges);
@@ -150,12 +159,56 @@ export default function WorkflowEditor({ initialNodes: propNodes, initialEdges: 
     [screenToFlowPosition, setNodes]
   );
 
+  // 実行中はノードとエッジに視覚的なハイライトを適用
+  const styledNodes = nodes.map((node) => {
+    const isRunning = executingNodeIds.includes(node.id);
+    const isDone = completedNodeIds.includes(node.id);
+    return {
+      ...node,
+      style: {
+        ...node.style,
+        ...(isRunning ? {
+          boxShadow: '0 0 0 3px #3b82f6, 0 0 20px rgba(59,130,246,0.5)',
+          borderRadius: '12px',
+          transition: 'box-shadow 0.3s ease',
+        } : isDone ? {
+          boxShadow: '0 0 0 3px #22c55e, 0 0 12px rgba(34,197,94,0.4)',
+          borderRadius: '12px',
+          transition: 'box-shadow 0.3s ease',
+        } : isExecuting ? {
+          opacity: 0.6,
+          transition: 'opacity 0.3s ease',
+        } : {}),
+      },
+    };
+  });
+
+  const styledEdges = edges.map((edge) => {
+    return {
+      ...edge,
+      animated: isExecuting ? true : edge.animated,
+      style: {
+        ...edge.style,
+        ...(isExecuting ? {
+          stroke: edge.style?.stroke || '#3b82f6',
+          strokeWidth: 2,
+        } : {}),
+      },
+    };
+  });
+
   return (
     <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-slate-950" ref={reactFlowWrapper}>
+      {isExecuting && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg animate-pulse flex items-center gap-2">
+          <span className="w-2 h-2 bg-white rounded-full animate-ping inline-block" />
+          ワークフローを実行中...
+        </div>
+      )}
       <div className="flex-1 w-full h-full border-t border-slate-200 dark:border-slate-700">
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
+          nodes={styledNodes}
+          edges={styledEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -180,6 +233,9 @@ export default function WorkflowEditor({ initialNodes: propNodes, initialEdges: 
                 case 'postGenNode': return '#6366f1';
                 case 'driveNode': return '#22c55e';
                 case 'calendarNode': return '#60a5fa';
+                case 'textInputNode': return '#0ea5e9';
+                case 'imageInputNode': return '#8b5cf6';
+                case 'videoInputNode': return '#f97316';
                 default: return '#eee';
               }
             }}

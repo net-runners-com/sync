@@ -13,14 +13,15 @@ interface EditorHeaderProps {
   onOpenSettings: () => void;
   workflowId?: string | null;
   initialName?: string;
+  onExecute?: (workflowId: string | null, nodes: any[], edges: any[]) => Promise<void>;
+  isExecuting?: boolean;
 }
 
-export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowId, initialName }: EditorHeaderProps) {
+export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowId, initialName, onExecute, isExecuting: externalExecuting }: EditorHeaderProps) {
   const { data: session } = useSession();
   const { getNodes, getEdges } = useReactFlow();
   
   const [isSaving, setIsSaving] = useState(false);
-  const [isExecuting, setIsExecuting] = useState(false);
   const [workflowId, setWorkflowId] = useState<string | null>(propWorkflowId ?? null);
   const [workflowName, setWorkflowName] = useState(initialName ?? "新しいワークフロー");
 
@@ -58,33 +59,16 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
   };
 
   const handleExecute = async () => {
-    if (!workflowId) {
+    const nodes = getNodes();
+    const edges = getEdges();
+    if (onExecute) {
+      await onExecute(workflowId, nodes, edges);
+    } else {
       toast.error("先にワークフローを保存してください");
-      return;
-    }
-    
-    setIsExecuting(true);
-    try {
-      const res = await fetch("/api/workflows/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workflowId }),
-      });
-
-      if (res.ok) {
-        toast.success("バックグラウンド実行をキューに追加しました", {
-          description: "ダッシュボードで進捗を確認できます。"
-        });
-      } else {
-        toast.error("実行の開始に失敗しました");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("実行中にエラーが発生しました");
-    } finally {
-      setIsExecuting(false);
     }
   };
+
+  const isExecuting = externalExecuting ?? false;
 
   return (
     <header className="h-14 border-b bg-white dark:bg-slate-900 flex items-center justify-between px-4 md:px-6 shadow-sm z-10 w-full">
