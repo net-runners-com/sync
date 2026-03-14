@@ -4,6 +4,53 @@ import { prisma } from "./prisma";
 const FB_GRAPH_API = "https://graph.facebook.com/v19.0";
 
 /**
+ * Xのアクセストークンをrefresh_tokenを使って更新し、DBに保存する
+ */
+async function refreshTwitterToken(accountId: string, refreshToken: string): Promise<string | null> {
+  const clientId = process.env.TWITTER_CLIENT_ID!;
+  const clientSecret = process.env.TWITTER_CLIENT_SECRET!;
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+
+  try {
+    const res = await fetch("https://api.twitter.com/2/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${credentials}`,
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.access_token) {
+      console.error("[Twitter] Token refresh failed:", data);
+      return null;
+    }
+
+    const expiresAt = Math.floor(Date.now() / 1000) + (data.expires_in ?? 7200);
+
+    // DBのトークンを更新
+    await prisma.account.update({
+      where: { id: accountId },
+      data: {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token ?? refreshToken,
+        expires_at: expiresAt,
+      },
+    });
+
+    console.log("[Twitter] Token refreshed successfully");
+    return data.access_token;
+  } catch (err) {
+    console.error("[Twitter] Token refresh error:", err);
+    return null;
+  }
+}
+
+/**
  * ユーザーのFacebookユーザーアクセストークンから、
  * ページアクセストークンの一覧を取得する
  */
@@ -170,7 +217,22 @@ export async function postToSNS(
     };
   }
 
-  const accessToken = account.access_token;
+  // アクセストークンの取得（Twitterは期限切れていれば自動リフレッシュ）
+  let accessToken = account.access_token;
+
+  if (platform === "twitter") {
+    const now = Math.floor(Date.now() / 1000);
+    const isExpired = account.expires_at && account.expires_at < now + 60; // 60秒前のマージン
+    if (isExpired && account.refresh_token) {
+      console.log("[Twitter] Access token expired, refreshing...");
+      const newToken = await refreshTwitterToken(account.id, account.refresh_token);
+      if (newToken) {
+        accessToken = newToken;
+      } else {
+        return { success: false, platform, error: "Xのトークンの更新に失敗しました。再度Xアカウントと連携してください。" };
+      }
+    }
+  }
 
   try {
     switch (platform) {
@@ -209,6 +271,7 @@ export async function postToSNS(
         
         if (!twitterRes.ok || twitterData.errors) {
           const errMsg = twitterData.errors?.[0]?.message || twitterData.detail || "Twitter API error";
+          console.error("[Twitter] Post error:", twitterData);
           return { success: false, platform, error: errMsg };
         }
         
