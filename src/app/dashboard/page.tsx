@@ -67,70 +67,42 @@ export default function DashboardPage() {
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto flex flex-col gap-10">
       
-      {/* 🚀 Top Creative Header Segment */}
-      <section className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 border border-slate-800 p-10 md:p-14 shadow-2xl">
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 right-0 p-32 bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 left-10 p-40 bg-purple-500/10 rounded-full blur-[140px] pointer-events-none" />
+      {/* 🚀 Minimalist AI Prompt Header */}
+      <section className="w-full flex flex-col items-center justify-center py-12 md:py-20 relative">
+        <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight text-center mb-4">
+          どんなワークフローを作りますか？
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-center mb-10 max-w-xl">
+          AIアシスタントに作りたいものを伝えるだけで、複雑な自動化ワークフローが数秒で完成します。
+        </p>
         
-        <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
-          <div className="flex flex-col gap-6">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
-              アイデアを、<br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
-                自動化の力で現実に。
-              </span>
-            </h1>
-            <p className="text-lg text-slate-400">
-              AIアシスタントに作りたいものを伝えるだけで、複雑なワークフローが数秒で完成します。
-            </p>
-            
-            <div className="relative mt-4 group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-              <div className="relative flex items-center bg-slate-800/80 backdrop-blur-xl border border-slate-700 rounded-2xl p-2 shadow-inner">
-                <Sparkles className="text-yellow-400 ml-4 mr-2" size={24} />
-                <input
-                  className="flex-1 bg-transparent border-none text-white placeholder-slate-400 focus:outline-none focus:ring-0 text-base md:text-lg px-2 py-4"
-                  placeholder="どんなワークフローを作りますか？ (例: 毎朝ニュースを要約して投稿)"
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                />
-                <button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white p-4 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center justify-center">
-                  <ArrowRight size={20} />
-                </button>
-              </div>
-            </div>
+        <div className="w-full max-w-3xl relative group">
+          <div className="absolute inset-0 bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl blur-xl transition-all group-focus-within:bg-blue-500/10 dark:group-focus-within:bg-blue-500/20" />
+          <div className="relative flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-sm transition-all focus-within:shadow-md focus-within:border-blue-500/50 dark:focus-within:border-blue-500/50">
+            <Sparkles className="text-slate-400 dark:text-slate-500 mx-3" size={24} />
+            <input
+              className="flex-1 bg-transparent border-none text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-0 text-lg px-2 py-4"
+              placeholder="例: 毎朝ニュースを要約して投稿するボット..."
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+            />
+            <button className="bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 p-3 md:px-6 rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
+              <span className="hidden md:inline">生成する</span>
+              <ArrowRight size={20} />
+            </button>
           </div>
+        </div>
 
-          {/* Quick Stats Mini Cards */}
-          <div className="hidden md:grid grid-cols-2 gap-4">
-            <div className="bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6 rounded-2xl flex flex-col gap-2">
-              <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mb-2">
-                <Activity size={20} />
-              </div>
-              <p className="text-slate-400 text-sm font-medium">本日の実行回数</p>
-              <p className="text-3xl font-bold text-white">1,284<span className="text-sm font-normal text-slate-500 ml-1">回</span></p>
-            </div>
-            <div className="bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6 rounded-2xl flex flex-col gap-2">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-2">
-                <CheckCircle2 size={20} />
-              </div>
-              <p className="text-slate-400 text-sm font-medium">成功率</p>
-              <p className="text-3xl font-bold text-white">99.8<span className="text-sm font-normal text-slate-500 ml-1">%</span></p>
-            </div>
-            <div className="col-span-2 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur border border-slate-700/50 p-6 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-slate-800/80 transition-colors" onClick={handleCreateBlank}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                   {creating ? <Loader2 className="animate-spin" size={24} /> : <PlusCircle size={24} />}
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold text-lg">ゼロから作成する</h3>
-                  <p className="text-slate-400 text-sm">空のキャンバスから手動でノードを配置</p>
-                </div>
-              </div>
-              <ArrowRight className="text-slate-500 group-hover:text-white transition-colors" size={20} />
-            </div>
-          </div>
+        <div className="mt-8 flex items-center gap-4 text-sm">
+          <span className="text-slate-500">または</span>
+          <button 
+            onClick={handleCreateBlank}
+            disabled={creating}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors"
+          >
+            {creating ? <Loader2 className="animate-spin" size={16} /> : <PlusCircle size={16} />}
+            ゼロから作成する
+          </button>
         </div>
       </section>
 

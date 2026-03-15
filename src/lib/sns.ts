@@ -265,8 +265,8 @@ export async function postToSNS(
   accountId?: string
 ): Promise<{ success: boolean; platform: string; data?: any; error?: string }> {
   // DBからユーザーのOAuthアクセストークンを取得
-  // Threadsの場合はInstagram/Facebookのトークンを利用（または専用プロバイダー）
-  const dbProvider = platform === "instagram" || platform === "threads" ? "facebook" : platform;
+  // Instagramの場合はFacebook経由のトークンを利用、Threadsは独立したthreadsプロバイダーを利用
+  const dbProvider = platform === "instagram" ? "facebook" : platform;
   const account = await prisma.account.findFirst({
     where: {
       userId,

@@ -102,6 +102,19 @@ export default function SettingsPage() {
       note: "X開発者ポータルでアプリを作成し、環境変数を設定してください。",
       disabled: false,
     },
+    {
+      id: "threads",
+      name: "Threads",
+      // Threads専用のアイコンがないため、プレースホルダーとしてMessageCircleを使用するかテキストアイコンにします
+      icon: <span className="text-2xl font-bold font-serif text-slate-900 dark:text-white">@</span>,
+      description: "Threadsへの自動投稿機能を利用できます。専用のMetaアプリ設定が必要です。",
+      accounts: socialAccounts.threads || [],
+      color: "bg-slate-100 dark:bg-slate-800",
+      borderColor: "border-slate-200 dark:border-slate-700",
+      accentColor: "bg-slate-900 dark:bg-slate-700 hover:bg-black dark:hover:bg-slate-600",
+      note: "Meta開発者ポータルで「Threads API」環境変数を設定してください。",
+      disabled: false,
+    },
   ];
 
   return (

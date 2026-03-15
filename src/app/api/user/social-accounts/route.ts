@@ -30,6 +30,7 @@ export async function GET() {
       instagram: [],
       twitter: [],
       google: [],
+      threads: [],
     };
 
     for (const account of accounts) {

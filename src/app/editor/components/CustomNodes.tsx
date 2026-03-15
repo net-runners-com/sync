@@ -3,7 +3,7 @@ import { Handle, Position, useReactFlow, NodeResizer } from '@xyflow/react';
 import {
   Clock, MessageSquare, Image as ImageIcon, Twitter, Instagram,
   Smartphone, GitBranch, Video, BarChart3, Facebook, Trash2, Upload,
-  X as XIcon, Calendar, PenTool, Database, LogIn, Box, FileText, Music, MessageCircle
+  X as XIcon, Calendar, PenTool, Database, LogIn, Box, FileText, Music, MessageCircle, Loader2
 } from 'lucide-react';
 import { toast } from "sonner";
 
@@ -36,12 +36,28 @@ const NodeHeader = ({ icon: Icon, title, gradient, nodeId }: { icon: any, title:
 
 // --- トリガーノード ---
 export const TriggerNode = memo(({ id, data }: { id: string, data: any }) => {
+  const { updateNodeData } = useReactFlow();
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateNodeData(id, { scheduledAt: e.target.value });
+  };
+
   return (
     <div className="bg-white dark:bg-slate-900 border-2 border-blue-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <NodeHeader icon={Clock} title="トリガー" gradient="from-blue-500 to-blue-600" nodeId={id} />
-      <div className="p-4 flex flex-col gap-2">
-        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || '毎日 12:00'}</div>
-        <div className="text-xs text-slate-400">Cron: 0 12 * * *</div>
+      <div className="p-4 flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">実行スケジュール設定</label>
+          <input 
+            type="datetime-local" 
+            className="nodrag w-full text-xs p-2 border border-blue-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-400 font-medium"
+            value={data.scheduledAt || ""}
+            onChange={handleDateChange}
+          />
+        </div>
+        <div className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-md border border-slate-100 dark:border-slate-800">
+          設定された日時に実行キューへ追加されます。
+        </div>
       </div>
       <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-blue-500 !border-2 !border-white" />
     </div>
@@ -959,19 +975,62 @@ TextInputNode.displayName = 'TextInputNode';
 
 // --- 画像入力ノード ---
 export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => {
+  const { updateNodeData } = useReactFlow();
   const [imageUrl, setImageUrl] = useState(data.imageUrl || '');
   const [preview, setPreview] = useState(data.imageUrl || '');
+  const [uploading, setUploading] = useState(false);
 
   const applyUrl = (url: string) => {
     setPreview(url);
-    data.imageUrl = url;
+    setImageUrl(url);
+    updateNodeData(id, { imageUrl: url });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+      if (res.ok && result.url) {
+        applyUrl(result.url);
+        toast.success("画像をアップロードしました");
+      } else {
+        throw new Error(result.error || "アップロードに失敗しました");
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <div className="bg-white dark:bg-slate-900 border-2 border-violet-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
       <NodeHeader icon={ImageIcon} title="画像入力" gradient="from-violet-400 to-purple-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">画像URL</label>
+        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">画像ファイルアップロード</label>
+        <div className="flex flex-col gap-2">
+          <input 
+            type="file" 
+            accept="image/*"
+            className="nodrag text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-400 dark:hover:file:bg-slate-700"
+            onChange={handleFileUpload}
+            disabled={uploading}
+          />
+          {uploading && <span className="text-xs text-violet-500 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> アップロード中...</span>}
+        </div>
+        
+        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase mt-1">または外部URLを指定</label>
         <div className="flex gap-2">
           <input type="text"
             placeholder="https://example.com/image.jpg"
@@ -979,10 +1038,12 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             onBlur={() => applyUrl(imageUrl)}
+            disabled={uploading}
           />
           <button
             onClick={() => applyUrl(imageUrl)}
-            className="px-3 py-1.5 bg-violet-500 hover:bg-violet-600 text-white text-xs font-bold rounded-lg transition-colors"
+            disabled={uploading}
+            className="px-3 py-1.5 bg-violet-500 hover:bg-violet-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors"
           >
             適用
           </button>
@@ -1000,11 +1061,10 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
           <div className="w-full h-32 rounded-lg border-2 border-dashed border-violet-200 dark:border-violet-800 flex items-center justify-center text-violet-400 text-xs">
             <div className="text-center">
               <ImageIcon size={24} className="mx-auto mb-1 opacity-50" />
-              <span>URLを入力してプレビュー</span>
+              <span>プレビュー</span>
             </div>
           </div>
         )}
-        <p className="text-[10px] text-slate-400">※ 外部URL形式で指定してください</p>
       </div>
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white" />
       <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white" />
@@ -1015,19 +1075,62 @@ ImageInputNode.displayName = 'ImageInputNode';
 
 // --- 動画入力ノード ---
 export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => {
+  const { updateNodeData } = useReactFlow();
   const [videoUrl, setVideoUrl] = useState(data.videoUrl || '');
   const [preview, setPreview] = useState(data.videoUrl || '');
+  const [uploading, setUploading] = useState(false);
 
   const applyUrl = (url: string) => {
     setPreview(url);
-    data.videoUrl = url;
+    setVideoUrl(url);
+    updateNodeData(id, { videoUrl: url });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+      if (res.ok && result.url) {
+        applyUrl(result.url);
+        toast.success("動画をアップロードしました");
+      } else {
+        throw new Error(result.error || "アップロードに失敗しました");
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <div className="bg-white dark:bg-slate-900 border-2 border-orange-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
       <NodeHeader icon={Video} title="動画入力" gradient="from-orange-400 to-red-500" nodeId={id} />
       <div className="p-4 flex flex-col gap-3">
-        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">動画URL</label>
+        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">動画ファイルアップロード</label>
+        <div className="flex flex-col gap-2">
+          <input 
+            type="file" 
+            accept="video/*"
+            className="nodrag text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 dark:file:bg-slate-800 dark:file:text-orange-400 dark:hover:file:bg-slate-700"
+            onChange={handleFileUpload}
+            disabled={uploading}
+          />
+          {uploading && <span className="text-xs text-orange-500 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> アップロード中...</span>}
+        </div>
+
+        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase mt-1">または外部URLを指定</label>
         <div className="flex gap-2">
           <input type="text"
             placeholder="https://example.com/video.mp4"
@@ -1035,10 +1138,12 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
             onBlur={() => applyUrl(videoUrl)}
+            disabled={uploading}
           />
           <button
             onClick={() => applyUrl(videoUrl)}
-            className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-lg transition-colors"
+            disabled={uploading}
+            className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors"
           >
             適用
           </button>
@@ -1054,7 +1159,7 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
           <div className="w-full h-24 rounded-lg border-2 border-dashed border-orange-200 dark:border-orange-800 flex items-center justify-center text-orange-400 text-xs">
             <div className="text-center">
               <Video size={24} className="mx-auto mb-1 opacity-50" />
-              <span>URLを入力してプレビュー</span>
+              <span>プレビュー</span>
             </div>
           </div>
         )}

@@ -19,7 +19,19 @@ export const executeWorkflow = inngest.createFunction(
       return wf;
     });
 
-    const nodes = (workflow.nodes as any[]) || [];
+    const nodesRaw = (workflow.nodes as any[]) || [];
+    const edges = (workflow.edges as any[]) || [];
+
+    // 接続されている（エッジが存在する）ノードIDの一覧を作成
+    const connectedNodeIds = new Set<string>();
+    edges.forEach((edge: any) => {
+      if (edge.source) connectedNodeIds.add(edge.source);
+      if (edge.target) connectedNodeIds.add(edge.target);
+    });
+
+    // 孤立したノードを除外し、線で繋がったノードのみを実行対象とする
+    // ※ノードが1つしかない（繋ぐ対象がない）場合のみ、例外としてそのまま対象にする
+    const nodes = nodesRaw.filter((node: any) => connectedNodeIds.has(node.id) || nodesRaw.length === 1);
 
     // ステップ2: テキスト・画像・動画の取得とAI生成
     const generatedContent = await step.run("generate-ai-content", async () => {

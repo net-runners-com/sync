@@ -69,6 +69,25 @@ export const authOptions: NextAuthOptions = {
         },
       },
     }),
+    {
+      id: "threads",
+      name: "Threads",
+      type: "oauth",
+      clientId: process.env.THREADS_CLIENT_ID,
+      clientSecret: process.env.THREADS_CLIENT_SECRET,
+      authorization: {
+        url: "https://threads.net/oauth/authorize",
+        params: { scope: "threads_basic,threads_content_publish" },
+      },
+      token: "https://graph.threads.net/oauth/access_token",
+      userinfo: "https://graph.threads.net/v1.0/me",
+      profile(profile: any) {
+        return {
+          id: profile.id,
+          name: profile.username || profile.name || "Threads User",
+        }
+      },
+    },
   ],
   session: {
     strategy: "jwt",
