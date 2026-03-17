@@ -77,15 +77,48 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.THREADS_CLIENT_SECRET,
       authorization: {
         url: "https://threads.net/oauth/authorize",
-        params: { scope: "threads_basic,threads_content_publish" },
+        params: {
+          scope: "threads_basic,threads_content_publish",
+          response_type: "code",
+        },
       },
-      token: "https://graph.threads.net/oauth/access_token",
-      userinfo: "https://graph.threads.net/v1.0/me",
+      token: {
+        url: "https://graph.threads.net/oauth/access_token",
+        async request({ client, params, checks, provider }: any) {
+          // Threads API: POSTでcode_verifierなしの通常フロー
+          const body = new URLSearchParams({
+            client_id: provider.clientId as string,
+            client_secret: provider.clientSecret as string,
+            grant_type: "authorization_code",
+            redirect_uri: params.redirect_uri,
+            code: params.code,
+          });
+          const res = await fetch("https://graph.threads.net/oauth/access_token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body,
+          });
+          const tokens = await res.json();
+          return { tokens };
+        },
+      },
+      userinfo: {
+        url: "https://graph.threads.net/v1.0/me",
+        params: { fields: "id,username,name,threads_profile_picture_url,threads_biography" },
+        async request({ tokens }: any) {
+          const res = await fetch(
+            `https://graph.threads.net/v1.0/me?fields=id,username,name,threads_profile_picture_url&access_token=${tokens.access_token}`
+          );
+          return res.json();
+        },
+      },
       profile(profile: any) {
         return {
           id: profile.id,
           name: profile.username || profile.name || "Threads User",
-        }
+          email: null,
+          image: profile.threads_profile_picture_url || null,
+        };
       },
     },
   ],

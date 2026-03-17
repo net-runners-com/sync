@@ -47,13 +47,15 @@ export default function SettingsPage() {
   const handleConnect = async (provider: string) => {
     setConnecting(provider);
     try {
-      // NextAuth の signIn でOAuthフローを開始
-      // callbackUrl はログイン後に戻るページ
-      await signIn(
-        provider,
-        { callbackUrl: "/dashboard/settings?connected=" + provider },
-        { prompt: provider === "twitter" ? "consent" : "select_account" } // force re-authentication / account selection
-      );
+      if (provider === "threads") {
+        await signIn("threads", { callbackUrl: "/dashboard/settings?connected=threads" });
+      } else {
+        await signIn(
+          provider,
+          { callbackUrl: "/dashboard/settings?connected=" + provider },
+          { prompt: provider === "twitter" ? "consent" : "select_account" }
+        );
+      }
     } catch (error) {
       console.error(`Failed to connect ${provider}:`, error);
       setConnecting(null);
