@@ -32,10 +32,12 @@ function timeAgo(dateStr: string) {
 function WorkflowCard({
   workflow,
   onDelete,
+  onUpdate,
   onMove,
 }: {
   workflow: Workflow;
   onDelete: (id: string) => void;
+  onUpdate: (id: string, patch: Partial<Workflow>) => void;
   onMove: (id: string, folder: string | null) => void;
 }) {
   const router = useRouter();
@@ -117,9 +119,9 @@ function WorkflowCard({
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ isPublic: nextPublic }),
                       });
-                      onDelete(workflow.id); // 一時的にリストのリロード用として呼び出し (実際はonUpdateが望ましい)
+                      // ローカルstateのisPublicだけ更新（削除しない）
+                      onUpdate(workflow.id, { isPublic: nextPublic });
                       setMenuOpen(false);
-                      // TODO: 本当は親コンポーネントで onUpdate に書き換えてリスト更新すべき
                     } catch (err) {
                       console.error(err);
                     }
@@ -203,6 +205,8 @@ export default function ProjectsPage() {
       : workflows.filter((w) => w.folder === selectedFolder);
 
   const handleDelete = (id: string) => setWorkflows((prev) => prev.filter((w) => w.id !== id));
+  const handleUpdate = (id: string, patch: Partial<Workflow>) =>
+    setWorkflows((prev) => prev.map((w) => w.id === id ? { ...w, ...patch } : w));
 
   const handleMove = async (id: string, folder: string | null) => {
     const wf = workflows.find((w) => w.id === id);
@@ -416,7 +420,7 @@ export default function ProjectsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {filtered.map((wf) => (
-              <WorkflowCard key={wf.id} workflow={wf} onDelete={handleDelete} onMove={handleMove} />
+              <WorkflowCard key={wf.id} workflow={wf} onDelete={handleDelete} onUpdate={handleUpdate} onMove={handleMove} />
             ))}
           </div>
         )}
