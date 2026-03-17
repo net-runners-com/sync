@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { LayoutDashboard, FileVideo, CreditCard, Settings, Sparkles, LogOut, User, LogIn, Zap, Globe, Box, BarChart3, Activity } from "lucide-react";
+import { LayoutDashboard, FileVideo, CreditCard, Settings, Sparkles, LogOut, User, LogIn, Globe, Box, BarChart3, Activity } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -52,10 +52,6 @@ export function DashboardSidebar() {
         <Link href="/dashboard/marketplace" className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
           <Globe size={18} />
           テンプレート
-        </Link>
-        <Link href="/dashboard/ai-test" className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
-          <Zap size={18} />
-          AI テスト
         </Link>
         <Link href="/dashboard/billing" className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
           <CreditCard size={18} />
