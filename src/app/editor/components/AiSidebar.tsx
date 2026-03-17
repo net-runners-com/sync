@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, X, Sparkles, Loader2, ChevronRight } from "lucide-react";
+import { Bot, Send, X, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Message {
@@ -177,11 +177,11 @@ export default function AiSidebar({ isOpen, onClose, onApplyWorkflow }: AiSideba
       </div>
 
       {/* 入力エリア */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
-        <div className="flex gap-2">
+      <div className="p-3 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex gap-2 items-end">
           <textarea
             className="flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-xl resize-none h-16 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-violet-400"
-            placeholder="ワークフローについて質問する..."
+            placeholder="質問する、またはフロー生成を依頼..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -191,26 +191,16 @@ export default function AiSidebar({ isOpen, onClose, onApplyWorkflow }: AiSideba
               }
             }}
           />
-        </div>
-        <div className="flex gap-1.5">
           <button
             onClick={sendMessage}
             disabled={!input.trim() || loading || generatingWorkflow}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors"
+            className="mb-0.5 p-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-xl text-white transition-colors flex-shrink-0"
           >
-            <Send size={12} />
-            チャット
-          </button>
-          <button
-            onClick={generateWorkflow}
-            disabled={!input.trim() || loading || generatingWorkflow}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-xs font-bold text-white transition-colors"
-          >
-            <ChevronRight size={12} />
-            フロー生成
+            {loading || generatingWorkflow
+              ? <Loader2 size={16} className="animate-spin" />
+              : <Send size={16} />}
           </button>
         </div>
-        <p className="text-[10px] text-slate-400 text-center">「フロー生成」でエディターにノードを配置します</p>
       </div>
     </div>
   );
