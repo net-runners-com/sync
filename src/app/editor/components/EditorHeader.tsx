@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Save, Settings, X, LogIn, LogOut, User, LayoutDashboard, Edit2 } from "lucide-react";
+import { Play, Save, Settings, X, LogIn, LogOut, User, LayoutDashboard, Edit2, Sparkles } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,13 +11,15 @@ import { useReactFlow } from "@xyflow/react";
 
 interface EditorHeaderProps {
   onOpenSettings: () => void;
+  onToggleAi?: () => void;
+  isAiOpen?: boolean;
   workflowId?: string | null;
   initialName?: string;
   onExecute?: (workflowId: string | null, nodes: any[], edges: any[]) => Promise<void>;
   isExecuting?: boolean;
 }
 
-export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowId, initialName, onExecute, isExecuting: externalExecuting }: EditorHeaderProps) {
+export default function EditorHeader({ onOpenSettings, onToggleAi, isAiOpen, workflowId: propWorkflowId, initialName, onExecute, isExecuting: externalExecuting }: EditorHeaderProps) {
   const { data: session } = useSession();
   const { getNodes, getEdges } = useReactFlow();
   
@@ -99,7 +101,20 @@ export default function EditorHeader({ onOpenSettings, workflowId: propWorkflowI
           Active
         </span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        {/* AIアシストボタン */}
+        <button
+          onClick={onToggleAi}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            isAiOpen
+              ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md"
+              : "bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-800/40 border border-violet-200 dark:border-violet-700"
+          }`}
+        >
+          <Sparkles size={13} className={isAiOpen ? "animate-pulse" : ""} />
+          AI アシスト
+        </button>
+        <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
         <Button 
           variant="outline" 
           size="sm" 

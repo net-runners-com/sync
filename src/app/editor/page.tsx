@@ -162,6 +162,8 @@ function EditorInner() {
         <main className="flex-1 flex flex-col relative w-full h-full min-w-0">
           <EditorHeader
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onToggleAi={() => setIsAiOpen((v) => !v)}
+            isAiOpen={isAiOpen}
             workflowId={initialData?.id ?? null}
             initialName={initialData?.name ?? "新しいワークフロー"}
             onExecute={handleExecute}
@@ -185,17 +187,6 @@ function EditorInner() {
               onApplyWorkflow={handleApplyWorkflow}
             />
           </div>
-
-          {/* AIボタン (右下フローティング) */}
-          {!isAiOpen && (
-            <button
-              onClick={() => setIsAiOpen(true)}
-              className="absolute bottom-6 right-6 z-20 flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg transition-all hover:scale-105 animate-in fade-in"
-            >
-              <Sparkles size={14} className="animate-pulse" />
-              AI アシスト
-            </button>
-          )}
         </main>
 
         {isSettingsOpen && (
