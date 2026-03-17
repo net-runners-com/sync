@@ -73,8 +73,8 @@ export const authOptions: NextAuthOptions = {
       id: "threads",
       name: "Threads",
       type: "oauth",
-      clientId: process.env.THREADS_CLIENT_ID,
-      clientSecret: process.env.THREADS_CLIENT_SECRET,
+      clientId: process.env.THREADS_CLIENT_ID || "",
+      clientSecret: process.env.THREADS_CLIENT_SECRET || "",
       authorization: {
         url: "https://threads.net/oauth/authorize",
         params: {
