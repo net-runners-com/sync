@@ -12,107 +12,143 @@ export const executeWorkflow = inngest.createFunction(
   async ({ event, step }) => {
     const { workflowId, userId } = event.data;
 
-    // ステップ1: DBからワークフロー取得
-    const workflow = await step.run("get-workflow-config", async () => {
-      const wf = await prisma.workflow.findUnique({ where: { id: workflowId } });
-      if (!wf) throw new Error(`Workflow ${workflowId} not found`);
-      return wf;
-    });
-
-    const nodesRaw = (workflow.nodes as any[]) || [];
-    const edges = (workflow.edges as any[]) || [];
-
-    // 接続されている（エッジが存在する）ノードIDの一覧を作成
-    const connectedNodeIds = new Set<string>();
-    edges.forEach((edge: any) => {
-      if (edge.source) connectedNodeIds.add(edge.source);
-      if (edge.target) connectedNodeIds.add(edge.target);
-    });
-
-    // 孤立したノードを除外し、線で繋がったノードのみを実行対象とする
-    // ※ノードが1つしかない（繋ぐ対象がない）場合のみ、例外としてそのまま対象にする
-    const nodes = nodesRaw.filter((node: any) => connectedNodeIds.has(node.id) || nodesRaw.length === 1);
-
-    // ステップ2: テキスト・画像・動画の取得とAI生成
-    const generatedContent = await step.run("generate-ai-content", async () => {
-      // テキスト
-      const textInputNode = nodes.find((n: any) => n.type === "textInputNode");
-      const textAiNode = nodes.find((n: any) => n.type === "textAiNode" || n.type === "textAi");
-
-      let generatedText: string | null = null;
-      if (textInputNode?.data?.text) {
-        generatedText = textInputNode.data.text;
-      } else if (textAiNode) {
-        const prompt = textAiNode.data?.customPrompt || "最新のAIニュースを100文字でSNS向けに要約して";
-        const model = textAiNode.data?.model || "openai/gpt-4o-mini";
-        console.log(`[Workflow: ${workflowId}] テキスト生成中... モデル: ${model}`);
-        generatedText = await generateTextWithAI(prompt, model);
-      } else {
-        generatedText = "Syncワークフローからの自動投稿です。";
-      }
-
-      // 画像・動画
-      const imageInputNode = nodes.find((n: any) => n.type === "imageInputNode");
-      const imageUrl = imageInputNode?.data?.imageUrl || null;
-
-      const videoInputNode = nodes.find((n: any) => n.type === "videoInputNode");
-      const videoUrl = videoInputNode?.data?.videoUrl || null;
-
-      return { text: generatedText, imageUrl, videoUrl };
-    });
-
-    // ステップ3: SNSノードを特定して投稿
-    const postResult = await step.run("post-to-sns", async () => {
-      // SNSノード（SocialActionNodeなど）を探す
-      const snsNodes = nodes.filter(
-        (n: any) => n.type === "socialActionNode" || n.type === "socialAction" || n.type === "snsAction"
-      );
-      
-      const results = [];
-      if (snsNodes.length === 0) {
-        return { success: true, message: "SNSノードなし: コンテンツ生成のみ完了", generatedContent };
-      }
-
-      for (const snsNode of snsNodes) {
-        const platform = snsNode.data?.platform || "twitter";
-        const snsPlatform = platform === "x" ? "twitter" : platform;
-
-        if (!snsPlatform || !["twitter", "facebook", "instagram", "threads"].includes(snsPlatform)) {
-          results.push({ platform: snsPlatform, success: false, error: "未対応のプラットフォーム" });
-          continue;
-        }
-
-        const result = await postToSNS(
-          userId as string,
-          snsPlatform as "twitter" | "facebook" | "instagram" | "threads",
-          generatedContent.text as string,
-          generatedContent.imageUrl,
-          snsNode.data?.accountId // 特定の連携アカウントIDがある場合は渡す
-        );
-        results.push(result);
-      }
-      return results;
-    });
-
-    // ステップ4: 実行ログを保存
-    await step.run("save-execution-log", async () => {
-      const isArray = Array.isArray(postResult);
-      const allSuccess = isArray ? postResult.every((r: any) => r.success) : postResult.success;
-
-      await prisma.executionLog.create({
+    // ステップ0: 実行ログ (RUNNING) を先に作成
+    const logId = await step.run("create-running-log", async () => {
+      const log = await prisma.executionLog.create({
         data: {
           workflowId,
-          status: allSuccess ? "SUCCESS" : "FAILED",
-          finishedAt: new Date(),
-          details: {
-            generatedText: generatedContent.text,
-            postResult,
-          },
+          status: "RUNNING",
+          details: { message: "実行開始" },
         },
       });
+      return log.id;
     });
 
-    return { message: "Workflow completed", generatedText: generatedContent.text, result: postResult };
+    try {
+      // ステップ1: DBからワークフロー取得
+      const workflow = await step.run("get-workflow-config", async () => {
+        const wf = await prisma.workflow.findUnique({ where: { id: workflowId } });
+        if (!wf) throw new Error(`Workflow ${workflowId} not found`);
+        return wf;
+      });
+
+      const nodesRaw = (workflow.nodes as any[]) || [];
+      const edges = (workflow.edges as any[]) || [];
+
+      // 接続されているノードIDのみを実行対象にする
+      const connectedNodeIds = new Set<string>();
+      edges.forEach((edge: any) => {
+        if (edge.source) connectedNodeIds.add(edge.source);
+        if (edge.target) connectedNodeIds.add(edge.target);
+      });
+      const nodes = nodesRaw.filter((node: any) => connectedNodeIds.has(node.id) || nodesRaw.length === 1);
+
+      // ステップ2: テキスト・画像・動画の取得とAI生成
+      const generatedContent = await step.run("generate-ai-content", async () => {
+        const textInputNode = nodes.find((n: any) => n.type === "textInputNode");
+        const textAiNode = nodes.find((n: any) => n.type === "textAiNode" || n.type === "textAi");
+
+        let generatedText: string | null = null;
+        if (textInputNode?.data?.text) {
+          generatedText = textInputNode.data.text;
+        } else if (textAiNode) {
+          const prompt = textAiNode.data?.customPrompt || "最新のAIニュースを100文字でSNS向けに要約して";
+          const model = textAiNode.data?.model || "openai/gpt-4o-mini";
+          console.log(`[Workflow: ${workflowId}] テキスト生成中... モデル: ${model}`);
+          generatedText = await generateTextWithAI(prompt, model);
+        } else {
+          generatedText = "Syncワークフローからの自動投稿です。";
+        }
+
+        const imageInputNode = nodes.find((n: any) => n.type === "imageInputNode");
+        const imageUrl = imageInputNode?.data?.imageUrl || null;
+
+        const videoInputNode = nodes.find((n: any) => n.type === "videoInputNode");
+        const videoUrl = videoInputNode?.data?.videoUrl || null;
+
+        return { text: generatedText, imageUrl, videoUrl };
+      });
+
+      // ステップ3: SNSノードを特定して投稿
+      const postResult = await step.run("post-to-sns", async () => {
+        const snsNodes = nodes.filter(
+          (n: any) => n.type === "socialActionNode" || n.type === "socialAction" || n.type === "snsAction"
+        );
+
+        const results: any[] = [];
+        if (snsNodes.length === 0) {
+          return [{ platform: "none", success: true, message: "SNSノードなし: コンテンツ生成のみ完了" }];
+        }
+
+        for (const snsNode of snsNodes) {
+          const platform = snsNode.data?.platform || "twitter";
+          const snsPlatform = platform === "x" ? "twitter" : platform;
+
+          if (!["twitter", "facebook", "instagram", "threads"].includes(snsPlatform)) {
+            results.push({ platform: snsPlatform, success: false, error: `未対応のプラットフォーム: ${snsPlatform}` });
+            continue;
+          }
+
+          // ツリー投稿かどうか
+          const threadTexts = snsNode.data?.postType === "thread" && snsNode.data?.threadTexts?.length > 0
+            ? snsNode.data.threadTexts as string[]
+            : undefined;
+
+          // メディアURL: ノードの手動入力 or 画像/動画ノードのURL
+          const mediaUrl = snsNode.data?.mediaUrl || generatedContent.imageUrl || generatedContent.videoUrl || null;
+
+          try {
+            const result = await postToSNS(
+              userId as string,
+              snsPlatform as "twitter" | "facebook" | "instagram" | "threads",
+              generatedContent.text as string,
+              mediaUrl,
+              snsNode.data?.accountId,
+              threadTexts
+            );
+            results.push({ ...result, platform: snsPlatform });
+          } catch (snsErr: any) {
+            results.push({ platform: snsPlatform, success: false, error: snsErr.message });
+          }
+        }
+        return results;
+      });
+
+      // ステップ4: 実行ログを SUCCESS / FAILED で更新
+      await step.run("update-execution-log", async () => {
+        const allSuccess = Array.isArray(postResult) ? postResult.every((r: any) => r.success) : (postResult as any).success;
+        const failedItems = Array.isArray(postResult) ? postResult.filter((r: any) => !r.success) : [];
+
+        await prisma.executionLog.update({
+          where: { id: logId },
+          data: {
+            status: allSuccess ? "SUCCESS" : "FAILED",
+            finishedAt: new Date(),
+            details: {
+              generatedText: generatedContent.text,
+              postResult,
+              ...(failedItems.length > 0 ? {
+                errorSummary: failedItems.map((f: any) => `${f.platform}: ${f.error}`).join(" / ")
+              } : {}),
+            },
+          },
+        });
+      });
+
+      return { message: "Workflow completed", generatedText: generatedContent.text, result: postResult };
+
+    } catch (fatalErr: any) {
+      // 予期せぬエラー: ログをFAILEDに更新
+      await prisma.executionLog.update({
+        where: { id: logId },
+        data: {
+          status: "FAILED",
+          finishedAt: new Date(),
+          details: { error: fatalErr.message || "予期せぬエラーが発生しました" },
+        },
+      }).catch(() => {});
+      throw fatalErr;
+    }
   }
 );
 

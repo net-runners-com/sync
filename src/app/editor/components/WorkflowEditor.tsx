@@ -109,6 +109,7 @@ interface WorkflowEditorProps {
   isExecuting?: boolean;
   executingNodeIds?: string[];
   completedNodeIds?: string[];
+  failedNodeIds?: string[];
 }
 
 import { Group } from "lucide-react";
@@ -119,6 +120,7 @@ export default function WorkflowEditor({
   isExecuting = false,
   executingNodeIds = [],
   completedNodeIds = [],
+  failedNodeIds = [],
 }: WorkflowEditorProps = {}) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(propNodes && propNodes.length > 0 ? propNodes : initialNodes);
@@ -249,11 +251,16 @@ export default function WorkflowEditor({
   const styledNodes = nodes.map((node) => {
     const isRunning = executingNodeIds.includes(node.id);
     const isDone = completedNodeIds.includes(node.id);
+    const isFailed = failedNodeIds.includes(node.id);
     return {
       ...node,
       style: {
         ...node.style,
-        ...(isRunning ? {
+        ...(isFailed ? {
+          boxShadow: '0 0 0 3px #ef4444, 0 0 20px rgba(239,68,68,0.5)',
+          borderRadius: '12px',
+          transition: 'box-shadow 0.3s ease',
+        } : isRunning ? {
           boxShadow: '0 0 0 3px #3b82f6, 0 0 20px rgba(59,130,246,0.5)',
           borderRadius: '12px',
           transition: 'box-shadow 0.3s ease',

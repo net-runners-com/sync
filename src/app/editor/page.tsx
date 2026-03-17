@@ -28,9 +28,7 @@ function EditorInner() {
 
   // AIサイドバー
   const [isAiOpen, setIsAiOpen] = useState(false);
-  // ワークフローをAI生成で上書きするコールバック
   const [aiGeneratedWorkflow, setAiGeneratedWorkflow] = useState<{ nodes: any[]; edges: any[] } | null>(null);
-
   const handleApplyWorkflow = useCallback((nodes: any[], edges: any[]) => {
     setAiGeneratedWorkflow({ nodes, edges });
   }, []);
@@ -39,6 +37,7 @@ function EditorInner() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executingNodeIds, setExecutingNodeIds] = useState<string[]>([]);
   const [completedNodeIds, setCompletedNodeIds] = useState<string[]>([]);
+  const [failedNodeIds, setFailedNodeIds] = useState<string[]>([]);
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -118,7 +117,7 @@ function EditorInner() {
       return;
     }
 
-    // ビジュアルシミュレーション開始（APIと並行）
+    setFailedNodeIds([]);
     simulateExecution(nodes, edges);
 
     try {
@@ -128,18 +127,72 @@ function EditorInner() {
         body: JSON.stringify({ workflowId: wfId }),
       });
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        toast.success("ワークフローを実行しました", {
-          description: data.generatedText ? `生成: ${data.generatedText.slice(0, 60)}...` : undefined,
-        });
-      } else {
-        toast.error("実行に失敗しました", {
-          description: data.error || "SNSノードがないか、連携が必要です",
-        });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error("実行開始に失敗しました", { description: data.error });
+        setIsExecuting(false);
+        return;
       }
+
+      toast.info("ワークフローを開始しました...", { description: "完了を確認中です" });
+
+      // ポーリングで実行結果を確認 (10秒以内, 2秒毎に5回目尋)
+      let attempts = 0;
+      const poll = async (): Promise<void> => {
+        await new Promise(r => setTimeout(r, 2000));
+        attempts++;
+        try {
+          const statusRes = await fetch("/api/workflows/status");
+          if (!statusRes.ok) return;
+          const wfList: any[] = await statusRes.json();
+          const wf = wfList.find((w: any) => w.id === wfId);
+          if (!wf) return;
+          const latestLog = wf.logs?.[0];
+          if (!latestLog) { if (attempts < 6) await poll(); return; }
+
+          if (latestLog.status === "RUNNING") {
+            if (attempts < 6) await poll();
+            return;
+          }
+
+          const results: any[] = latestLog.details?.postResult || [];
+          const failed = results.filter((r: any) => !r.success);
+          const allOk = failed.length === 0 && results.length > 0 || results.some((r: any) => r.success);
+          const isSnsOnly = results.length === 1 && results[0].platform === "none";
+
+          if (latestLog.status === "SUCCESS" || isSnsOnly) {
+            toast.success("実行完了✅", {
+              description: isSnsOnly
+                ? "コンテンツ生成完了（SNSノードなし）"
+                : `投稿成功: ${results.filter((r: any) => r.success).map((r: any) => r.platform).join(", ")}`,
+              duration: 5000,
+            });
+          } else if (latestLog.status === "FAILED") {
+            const errMsg = latestLog.details?.errorSummary || latestLog.details?.error ||
+              failed.map((f: any) => `${f.platform}: ${f.error}`).join(" / ") || "実行失敗";
+
+            toast.error("実行失敗 ❌", {
+              description: errMsg,
+              duration: 8000,
+            });
+
+            // SNSノードを赤ハイライトに (platformが分からないことが多いので全SNSノード)
+            const snsNodeIds = nodes
+              .filter((n: any) => n.type === "socialActionNode")
+              .map((n: any) => n.id);
+            setFailedNodeIds(snsNodeIds);
+          }
+
+          setIsExecuting(false);
+          setExecutingNodeIds([]);
+        } catch {
+          if (attempts < 6) await poll();
+        }
+      };
+      poll();
     } catch (err) {
       toast.error("実行中にエラーが発生しました");
+      setIsExecuting(false);
     }
   };
 
@@ -178,6 +231,7 @@ function EditorInner() {
                 isExecuting={isExecuting}
                 executingNodeIds={executingNodeIds}
                 completedNodeIds={completedNodeIds}
+                failedNodeIds={failedNodeIds}
               />
             </div>
 
