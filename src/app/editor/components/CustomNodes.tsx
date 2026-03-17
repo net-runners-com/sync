@@ -389,6 +389,23 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
     }
   };
 
+  const [postType, setPostType] = useState(data.postType || 'tweet');
+  const [threadTexts, setThreadTexts] = useState<string[]>(data.threadTexts || ['']);
+  const [mediaUrl, setMediaUrl] = useState(data.mediaUrl || '');
+
+  const updatePostType = (val: string) => {
+    setPostType(val);
+    setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, postType: val } } : n));
+  };
+  const updateThreadTexts = (texts: string[]) => {
+    setThreadTexts(texts);
+    setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, threadTexts: texts } } : n));
+  };
+  const updateMediaUrl = (val: string) => {
+    setMediaUrl(val);
+    setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, mediaUrl: val } } : n));
+  };
+
   return (
     <>
       <div className={`bg-white dark:bg-slate-900 border-2 ${getBorderColor()} rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl`}>
@@ -401,19 +418,17 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
             <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">投稿タイプ</label>
             <select
               className={`nodrag w-full text-xs p-1.5 border ${getBorderColor()} rounded-md focus:outline-none cursor-pointer font-medium bg-slate-50 dark:bg-slate-950`}
-              defaultValue={data.postType || 'feed'}
-              onChange={(e) => setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, postType: e.target.value } } : n))}
+              value={postType}
+              onChange={(e) => updatePostType(e.target.value)}
             >
               {data.platform === 'x' ? (
                 <>
                   <option value="tweet">ツイート</option>
-                  <option value="thread">スレッド</option>
+                  <option value="thread">ツリー投稿（スレッド）</option>
                   <option value="quote">引用ツイート</option>
                 </>
               ) : data.platform === 'threads' ? (
-                <>
-                  <option value="thread">Threads 投稿</option>
-                </>
+                <><option value="thread">Threads 投稿</option></>
               ) : data.platform === 'facebook' ? (
                 <>
                   <option value="feed">フィード投稿</option>
@@ -432,6 +447,46 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
               )}
             </select>
           </div>
+
+          {/* X ツリー投稿: 複数テキストエリア */}
+          {data.platform === 'x' && postType === 'thread' && (
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ツリー内容（各ツイート）</label>
+              {threadTexts.map((txt, i) => (
+                <div key={i} className="flex gap-1 items-start">
+                  <span className="text-[10px] text-slate-400 mt-2 w-4 flex-shrink-0">{i + 1}.</span>
+                  <textarea
+                    className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-slate-400 resize-none h-14 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                    placeholder={`ツイート ${i + 1}`}
+                    value={txt}
+                    onChange={(e) => { const next = [...threadTexts]; next[i] = e.target.value; updateThreadTexts(next); }}
+                  />
+                  {threadTexts.length > 1 && (
+                    <button onClick={() => updateThreadTexts(threadTexts.filter((_, j) => j !== i))}
+                      className="text-slate-300 hover:text-red-400 mt-1 transition-colors"><XIcon size={14}/></button>
+                  )}
+                </div>
+              ))}
+              <button onClick={() => updateThreadTexts([...threadTexts, ''])}
+                className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border border-dashed border-slate-300 dark:border-slate-600 rounded-md py-1.5 transition-colors flex items-center justify-center gap-1">
+                + ツイートを追加
+              </button>
+            </div>
+          )}
+
+          {/* X / Threads: メディアURL添付 */}
+          {(data.platform === 'x' || data.platform === 'threads') && (
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">メディアURL（画像・動画）</label>
+              <input type="text"
+                placeholder="https://... または上流ノードから自動取得"
+                className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-slate-400 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+                value={mediaUrl}
+                onChange={(e) => updateMediaUrl(e.target.value)}
+              />
+              <p className="text-[10px] text-slate-400">画像ノードや動画ノードと繋げると自動で使用されます</p>
+            </div>
+          )}
 
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">連携アカウントを選択</label>
@@ -455,10 +510,8 @@ export const SocialActionNode = memo(({ id, data }: { id: string, data: any }) =
                   <span className="w-2 h-2 rounded-full bg-red-500"></span>
                   連携がありません
                 </span>
-                <button
-                   className="text-blue-600 hover:text-blue-800 underline"
-                   onClick={() => toast.info("設定画面からアカウントを連携してください")}
-                >
+                <button className="text-blue-600 hover:text-blue-800 underline"
+                   onClick={() => toast.info("設定画面からアカウントを連携してください")}>
                   設定へ
                 </button>
               </div>
@@ -764,38 +817,71 @@ GoogleDocsNode.displayName = 'GoogleDocsNode';
 
 // --- 新規追加: noteノード ---
 export const NoteNode = memo(({ id, data }: { id: string, data: any }) => {
+  const { updateNodeData } = useReactFlow();
+  const [title, setTitle] = useState(data.noteTitle || '');
+  const [hashtags, setHashtags] = useState(data.noteHashtags || '');
+  const [noteStatus, setNoteStatus] = useState<'public' | 'draft'>(data.noteStatus || 'public');
+  const [posting, setPosting] = useState(false);
+
+  const handlePost = async () => {
+    if (!title.trim()) { toast.error('タイトルを入力してください'); return; }
+    setPosting(true);
+    try {
+      const res = await fetch('/api/note', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body: data.body || '（本文は前のノードから自動取得されます）', hashtags, status: noteStatus }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success('noteに投稿しました！');
+      } else {
+        toast.error(result.error || '投稿に失敗しました');
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setPosting(false);
+    }
+  };
+
   return (
-    <div className="bg-white dark:bg-slate-900 border-2 border-emerald-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl relative">
+    <div className="bg-white dark:bg-slate-900 border-2 border-emerald-500 rounded-xl shadow-lg min-w-[260px] overflow-hidden transition-shadow hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-white" />
       <NodeHeader icon={FileText} title="noteに投稿" gradient="from-emerald-500 to-green-600" nodeId={id} />
-      <div className="absolute top-2 right-10 bg-slate-800 text-white text-[8px] px-1.5 py-0.5 rounded font-bold shadow-sm">
-        Coming Soon
-      </div>
       <div className="p-4 flex flex-col gap-3">
-        <div className="text-sm font-medium text-slate-700 dark:text-slate-200">{data.label || 'note記事作成'}</div>
-        <div className="opacity-70">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">タイトル</label>
-            <input type="text" 
-              placeholder="生成されたタイトル" 
-              className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed bg-slate-50 dark:bg-slate-950"
-              disabled
-            />
-          </div>
-          <div className="flex flex-col gap-1 mt-1">
-            <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ハッシュタグ</label>
-            <input type="text" 
-              placeholder="#note #AI" 
-              className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md cursor-not-allowed bg-slate-50 dark:bg-slate-950"
-              disabled
-            />
-          </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">タイトル</label>
+          <input type="text"
+            placeholder="記事タイトル"
+            className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-emerald-400 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+            value={title}
+            onChange={(e) => { setTitle(e.target.value); updateNodeData(id, { noteTitle: e.target.value }); }}
+          />
         </div>
-        <div className="mt-1 flex flex-col gap-2">
-          <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold bg-slate-100 dark:bg-slate-800 p-1.5 rounded border border-slate-200 dark:border-slate-700 text-center">
-            公式APIが未公開のため、準備中です
-          </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">ハッシュタグ</label>
+          <input type="text"
+            placeholder="#note #AI #自動化"
+            className="nodrag w-full text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:border-emerald-400 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+            value={hashtags}
+            onChange={(e) => { setHashtags(e.target.value); updateNodeData(id, { noteHashtags: e.target.value }); }}
+          />
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">公開設定</label>
+          <select className="nodrag w-full text-xs p-1.5 border border-emerald-200 dark:border-emerald-800 rounded-md bg-emerald-50 dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 focus:outline-none cursor-pointer"
+            value={noteStatus}
+            onChange={(e) => { setNoteStatus(e.target.value as 'public' | 'draft'); updateNodeData(id, { noteStatus: e.target.value }); }}>
+            <option value="public">公開</option>
+            <option value="draft">下書き保存</option>
+          </select>
+        </div>
+        <button onClick={handlePost} disabled={posting}
+          className="w-full text-xs py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-md font-bold flex items-center justify-center gap-1.5 transition-colors">
+          {posting ? <><Loader2 size={12} className="animate-spin"/>投稿中...</> : '▶ テスト投稿'}
+        </button>
+        <p className="text-[10px] text-slate-400 text-center">※NOTE_SESSION_TOKENの設定が必要です</p>
       </div>
     </div>
   );
@@ -979,6 +1065,7 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
   const [imageUrl, setImageUrl] = useState(data.imageUrl || '');
   const [preview, setPreview] = useState(data.imageUrl || '');
   const [uploading, setUploading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const applyUrl = (url: string) => {
     setPreview(url);
@@ -989,17 +1076,11 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
       const result = await res.json();
       if (res.ok && result.url) {
         applyUrl(result.url);
@@ -1015,60 +1096,61 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border-2 border-violet-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
-      <NodeHeader icon={ImageIcon} title="画像入力" gradient="from-violet-400 to-purple-500" nodeId={id} />
-      <div className="p-4 flex flex-col gap-3">
-        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">画像ファイルアップロード</label>
-        <div className="flex flex-col gap-2">
-          <input 
-            type="file" 
-            accept="image/*"
-            className="nodrag text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-400 dark:hover:file:bg-slate-700"
-            onChange={handleFileUpload}
-            disabled={uploading}
-          />
-          {uploading && <span className="text-xs text-violet-500 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> アップロード中...</span>}
-        </div>
-        
-        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase mt-1">または外部URLを指定</label>
-        <div className="flex gap-2">
-          <input type="text"
-            placeholder="https://example.com/image.jpg"
-            className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-violet-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            onBlur={() => applyUrl(imageUrl)}
-            disabled={uploading}
-          />
-          <button
-            onClick={() => applyUrl(imageUrl)}
-            disabled={uploading}
-            className="px-3 py-1.5 bg-violet-500 hover:bg-violet-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors"
-          >
-            適用
-          </button>
-        </div>
-        {preview ? (
-          <div className="relative w-full h-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-            <img
-              src={preview}
-              alt="preview"
-              className="w-full h-full object-cover"
-              onError={() => setPreview('')}
+    <>
+      <div className="bg-white dark:bg-slate-900 border-2 border-violet-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
+        <NodeHeader icon={ImageIcon} title="画像入力" gradient="from-violet-400 to-purple-500" nodeId={id} />
+        <div className="p-4 flex flex-col gap-3">
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">画像ファイルアップロード</label>
+          <div className="flex flex-col gap-2">
+            <input type="file" accept="image/*"
+              className="nodrag text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-400 dark:hover:file:bg-slate-700"
+              onChange={handleFileUpload} disabled={uploading}
             />
+            {uploading && <span className="text-xs text-violet-500 flex items-center gap-1"><Loader2 size={12} className="animate-spin"/> アップロード中...</span>}
           </div>
-        ) : (
-          <div className="w-full h-32 rounded-lg border-2 border-dashed border-violet-200 dark:border-violet-800 flex items-center justify-center text-violet-400 text-xs">
-            <div className="text-center">
-              <ImageIcon size={24} className="mx-auto mb-1 opacity-50" />
-              <span>プレビュー</span>
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase mt-1">または外部URLを指定</label>
+          <div className="flex gap-2">
+            <input type="text" placeholder="https://example.com/image.jpg"
+              className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-violet-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} onBlur={() => applyUrl(imageUrl)} disabled={uploading}
+            />
+            <button onClick={() => applyUrl(imageUrl)} disabled={uploading}
+              className="px-3 py-1.5 bg-violet-500 hover:bg-violet-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors">
+              適用
+            </button>
+          </div>
+          {preview ? (
+            <div className="relative w-full h-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 cursor-zoom-in group"
+              onClick={() => setModalOpen(true)}>
+              <img src={preview} alt="preview" className="w-full h-full object-cover transition-transform group-hover:scale-105" onError={() => setPreview('')}/>
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <span className="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 bg-black/50 px-2 py-1 rounded-full">クリックして拡大</span>
+              </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="w-full h-32 rounded-lg border-2 border-dashed border-violet-200 dark:border-violet-800 flex items-center justify-center text-violet-400 text-xs">
+              <div className="text-center"><ImageIcon size={24} className="mx-auto mb-1 opacity-50"/><span>プレビュー</span></div>
+            </div>
+          )}
+        </div>
+        <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white"/>
+        <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white"/>
       </div>
-      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white" />
-      <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-violet-400 !border-2 !border-white" />
-    </div>
+
+      {/* 画像フルスクリーンモーダル */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setModalOpen(false)}>
+          <div className="relative max-w-5xl max-h-[90vh] w-full p-4" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setModalOpen(false)}
+              className="absolute top-2 right-2 z-10 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition-colors">
+              <XIcon size={20}/>
+            </button>
+            <img src={preview} alt="fullsize preview" className="max-w-full max-h-[85vh] mx-auto rounded-xl object-contain shadow-2xl"/>
+          </div>
+        </div>
+      )}
+    </>
   );
 });
 ImageInputNode.displayName = 'ImageInputNode';
@@ -1079,6 +1161,7 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
   const [videoUrl, setVideoUrl] = useState(data.videoUrl || '');
   const [preview, setPreview] = useState(data.videoUrl || '');
   const [uploading, setUploading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const applyUrl = (url: string) => {
     setPreview(url);
@@ -1089,17 +1172,11 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
       const result = await res.json();
       if (res.ok && result.url) {
         applyUrl(result.url);
@@ -1115,63 +1192,65 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border-2 border-orange-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
-      <NodeHeader icon={Video} title="動画入力" gradient="from-orange-400 to-red-500" nodeId={id} />
-      <div className="p-4 flex flex-col gap-3">
-        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">動画ファイルアップロード</label>
-        <div className="flex flex-col gap-2">
-          <input 
-            type="file" 
-            accept="video/*"
-            className="nodrag text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 dark:file:bg-slate-800 dark:file:text-orange-400 dark:hover:file:bg-slate-700"
-            onChange={handleFileUpload}
-            disabled={uploading}
-          />
-          {uploading && <span className="text-xs text-orange-500 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> アップロード中...</span>}
-        </div>
-
-        <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase mt-1">または外部URLを指定</label>
-        <div className="flex gap-2">
-          <input type="text"
-            placeholder="https://example.com/video.mp4"
-            className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-orange-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            onBlur={() => applyUrl(videoUrl)}
-            disabled={uploading}
-          />
-          <button
-            onClick={() => applyUrl(videoUrl)}
-            disabled={uploading}
-            className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors"
-          >
-            適用
-          </button>
-        </div>
-        {preview ? (
-          <video
-            src={preview}
-            controls
-            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 max-h-40"
-            onError={() => setPreview('')}
-          />
-        ) : (
-          <div className="w-full h-24 rounded-lg border-2 border-dashed border-orange-200 dark:border-orange-800 flex items-center justify-center text-orange-400 text-xs">
-            <div className="text-center">
-              <Video size={24} className="mx-auto mb-1 opacity-50" />
-              <span>プレビュー</span>
-            </div>
+    <>
+      <div className="bg-white dark:bg-slate-900 border-2 border-orange-400 rounded-xl shadow-lg min-w-[280px] max-w-[340px] overflow-hidden transition-shadow hover:shadow-xl">
+        <NodeHeader icon={Video} title="動画入力" gradient="from-orange-400 to-red-500" nodeId={id} />
+        <div className="p-4 flex flex-col gap-3">
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">動画ファイルアップロード</label>
+          <div className="flex flex-col gap-2">
+            <input type="file" accept="video/*"
+              className="nodrag text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 dark:file:bg-slate-800 dark:file:text-orange-400 dark:hover:file:bg-slate-700"
+              onChange={handleFileUpload} disabled={uploading}
+            />
+            {uploading && <span className="text-xs text-orange-500 flex items-center gap-1"><Loader2 size={12} className="animate-spin"/> アップロード中...</span>}
           </div>
-        )}
-        <div className="flex flex-wrap gap-1 mt-1">
-          {['TikTok', 'Instagram リール', 'YouTube Shorts'].map(p => (
-            <span key={p} className="text-[10px] bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-700">{p}</span>
-          ))}
+          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase mt-1">または外部URLを指定</label>
+          <div className="flex gap-2">
+            <input type="text" placeholder="https://example.com/video.mp4"
+              className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-orange-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} onBlur={() => applyUrl(videoUrl)} disabled={uploading}
+            />
+            <button onClick={() => applyUrl(videoUrl)} disabled={uploading}
+              className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors">
+              適用
+            </button>
+          </div>
+          {preview ? (
+            <div className="relative group cursor-zoom-in" onClick={() => setModalOpen(true)}>
+              <video src={preview} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 max-h-40 pointer-events-none" onError={() => setPreview('')}/>
+              <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                <span className="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 bg-black/50 px-2 py-1 rounded-full">クリックして拡大</span>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-24 rounded-lg border-2 border-dashed border-orange-200 dark:border-orange-800 flex items-center justify-center text-orange-400 text-xs">
+              <div className="text-center"><Video size={24} className="mx-auto mb-1 opacity-50"/><span>プレビュー</span></div>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-1 mt-1">
+            {['TikTok', 'Instagram リール', 'YouTube Shorts'].map(p => (
+              <span key={p} className="text-[10px] bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-700">{p}</span>
+            ))}
+          </div>
         </div>
+        <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-orange-400 !border-2 !border-white"/>
+        <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-orange-400 !border-2 !border-white"/>
       </div>
-      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-orange-400 !border-2 !border-white" />
-      <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-orange-400 !border-2 !border-white" />
-    </div>
+
+      {/* 動画フルスクリーンモーダル */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setModalOpen(false)}>
+          <div className="relative max-w-5xl max-h-[90vh] w-full p-4" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setModalOpen(false)}
+              className="absolute top-2 right-2 z-10 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition-colors">
+              <XIcon size={20}/>
+            </button>
+            <video src={preview} controls autoPlay className="max-w-full max-h-[85vh] mx-auto rounded-xl shadow-2xl"/>
+          </div>
+        </div>
+      )}
+    </>
   );
 });
 VideoInputNode.displayName = 'VideoInputNode';

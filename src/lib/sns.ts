@@ -262,7 +262,8 @@ export async function postToSNS(
   platform: "twitter" | "instagram" | "facebook" | "threads",
   message: string,
   imageUrl?: string | null,
-  accountId?: string
+  accountId?: string,
+  threadTexts?: string[]
 ): Promise<{ success: boolean; platform: string; data?: any; error?: string }> {
   // DBからユーザーのOAuthアクセストークンを取得
   // Instagramの場合はFacebook経由のトークンを利用、Threadsは独立したthreadsプロバイダーを利用
@@ -333,29 +334,74 @@ export async function postToSNS(
       }
       
       case "twitter": {
-        // Twitter API v2 POST /2/tweets
-        const twitterRes = await fetch("https://api.twitter.com/2/tweets", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ text: message }),
-        });
-        
-        const twitterData = await twitterRes.json();
-        
-        if (!twitterRes.ok || twitterData.errors) {
-          const errMsg = twitterData.errors?.[0]?.message || twitterData.detail || "Twitter API error";
-          console.error("[Twitter] Post error:", twitterData);
-          return { success: false, platform, error: errMsg };
+        // メディアURLがある場合はメディアアップロード
+        let mediaId: string | undefined;
+        if (imageUrl) {
+          try {
+            // 画像URLからバイナリを取得
+            const mediaRes = await fetch(imageUrl);
+            const mediaBuffer = Buffer.from(await mediaRes.arrayBuffer());
+            const base64Media = mediaBuffer.toString("base64");
+            const mediaContentType = mediaRes.headers.get("content-type") || "image/jpeg";
+
+            // Twitter v1.1 Media Upload
+            const uploadRes = await fetch("https://upload.twitter.com/1.1/media/upload.json", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                media_data: base64Media,
+                media_category: mediaContentType.startsWith("video") ? "tweet_video" : "tweet_image",
+              }),
+            });
+            const uploadData = await uploadRes.json();
+            if (uploadRes.ok && uploadData.media_id_string) {
+              mediaId = uploadData.media_id_string;
+              console.log("[Twitter] Media uploaded:", mediaId);
+            } else {
+              console.warn("[Twitter] Media upload failed (continuing without media):", uploadData);
+            }
+          } catch (mediaErr) {
+            console.warn("[Twitter] Media upload error (continuing without media):", mediaErr);
+          }
         }
-        
-        return {
-          success: true,
-          platform,
-          data: twitterData.data,
+
+        const postTweet = async (text: string, replyToId?: string) => {
+          const body: any = { text };
+          if (mediaId) body.media = { media_ids: [mediaId] };
+          if (replyToId) body.reply = { in_reply_to_tweet_id: replyToId };
+
+          const twitterRes = await fetch("https://api.twitter.com/2/tweets", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const twitterData = await twitterRes.json();
+          if (!twitterRes.ok || twitterData.errors) {
+            const errMsg = twitterData.errors?.[0]?.message || twitterData.detail || "Twitter API error";
+            throw new Error(errMsg);
+          }
+          return twitterData.data;
         };
+
+        // ツリー投稿（スレッド）
+        if (threadTexts && threadTexts.length > 0) {
+          let lastTweetId: string | undefined;
+          const tweetIds: string[] = [];
+          for (const text of threadTexts) {
+            if (!text.trim()) continue;
+            const tweet = await postTweet(text, lastTweetId);
+            lastTweetId = tweet.id;
+            tweetIds.push(tweet.id);
+          }
+          return { success: true, platform, data: { tweetIds } };
+        }
+
+        // 通常ツイート
+        const tweet = await postTweet(message);
+        return { success: true, platform, data: tweet };
       }
       
       default:

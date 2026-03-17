@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import WorkflowEditor from "./components/WorkflowEditor";
 import Sidebar from "./components/Sidebar";
+import AiSidebar from "./components/AiSidebar";
 import { Button } from "@/components/ui/button";
 import { ReactFlowProvider } from "@xyflow/react";
-import { Settings, X, Loader2 } from "lucide-react";
+import { Settings, X, Loader2, Sparkles } from "lucide-react";
 import EditorHeader from "./components/EditorHeader";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -24,6 +25,15 @@ function EditorInner() {
     edges: any[];
   } | null>(null);
   const [loading, setLoading] = useState(!!workflowId);
+
+  // AIサイドバー
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  // ワークフローをAI生成で上書きするコールバック
+  const [aiGeneratedWorkflow, setAiGeneratedWorkflow] = useState<{ nodes: any[]; edges: any[] } | null>(null);
+
+  const handleApplyWorkflow = useCallback((nodes: any[], edges: any[]) => {
+    setAiGeneratedWorkflow({ nodes, edges });
+  }, []);
 
   // 実行状態管理
   const [isExecuting, setIsExecuting] = useState(false);
@@ -149,7 +159,7 @@ function EditorInner() {
       <ReactFlowProvider>
         <Sidebar />
 
-        <main className="flex-1 flex flex-col relative w-full h-full">
+        <main className="flex-1 flex flex-col relative w-full h-full min-w-0">
           <EditorHeader
             onOpenSettings={() => setIsSettingsOpen(true)}
             workflowId={initialData?.id ?? null}
@@ -158,15 +168,34 @@ function EditorInner() {
             isExecuting={isExecuting}
           />
 
-          <div className="flex-1 w-full h-full relative">
-            <WorkflowEditor
-              initialNodes={initialData?.nodes ?? []}
-              initialEdges={initialData?.edges ?? []}
-              isExecuting={isExecuting}
-              executingNodeIds={executingNodeIds}
-              completedNodeIds={completedNodeIds}
+          <div className="flex flex-1 w-full h-full relative overflow-hidden">
+            <div className="flex-1 w-full h-full relative">
+              <WorkflowEditor
+                initialNodes={aiGeneratedWorkflow?.nodes ?? initialData?.nodes ?? []}
+                initialEdges={aiGeneratedWorkflow?.edges ?? initialData?.edges ?? []}
+                isExecuting={isExecuting}
+                executingNodeIds={executingNodeIds}
+                completedNodeIds={completedNodeIds}
+              />
+            </div>
+
+            <AiSidebar
+              isOpen={isAiOpen}
+              onClose={() => setIsAiOpen(false)}
+              onApplyWorkflow={handleApplyWorkflow}
             />
           </div>
+
+          {/* AIボタン (右下フローティング) */}
+          {!isAiOpen && (
+            <button
+              onClick={() => setIsAiOpen(true)}
+              className="absolute bottom-6 right-6 z-20 flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg transition-all hover:scale-105 animate-in fade-in"
+            >
+              <Sparkles size={14} className="animate-pulse" />
+              AI アシスト
+            </button>
+          )}
         </main>
 
         {isSettingsOpen && (
