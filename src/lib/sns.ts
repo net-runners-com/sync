@@ -334,17 +334,21 @@ export async function postToSNS(
       }
       
       case "twitter": {
-        // メディアURLがある場合はメディアアップロード
+        // メディアURLがある場合はメディアアップロードを試みる
+        // ⚠️ Twitter Media Upload v1.1 は OAuth 1.0aが必要で、
+        //    OAuth 2.0 Bearer Token では動作しない。
+        //    そのためアップロード失敗時は画像URLをツイート本文末尾に追加するフォールバックを使用。
         let mediaId: string | undefined;
+        let mediaFallbackUrl: string | undefined;
+
         if (imageUrl) {
           try {
-            // 画像URLからバイナリを取得
             const mediaRes = await fetch(imageUrl);
+            if (!mediaRes.ok) throw new Error(`画像の取得に失敗: ${mediaRes.status}`);
             const mediaBuffer = Buffer.from(await mediaRes.arrayBuffer());
             const base64Media = mediaBuffer.toString("base64");
             const mediaContentType = mediaRes.headers.get("content-type") || "image/jpeg";
 
-            // Twitter v1.1 Media Upload
             const uploadRes = await fetch("https://upload.twitter.com/1.1/media/upload.json", {
               method: "POST",
               headers: {
@@ -356,20 +360,36 @@ export async function postToSNS(
                 media_category: mediaContentType.startsWith("video") ? "tweet_video" : "tweet_image",
               }),
             });
-            const uploadData = await uploadRes.json();
-            if (uploadRes.ok && uploadData.media_id_string) {
-              mediaId = uploadData.media_id_string;
-              console.log("[Twitter] Media uploaded:", mediaId);
+
+            // レスポンスが空またはJSONでない場合を安全に処理
+            const uploadText = await uploadRes.text();
+            if (!uploadText || !uploadText.trim().startsWith("{")) {
+              console.warn("[Twitter] Media upload returned non-JSON response (OAuth 1.0a required for v1.1):", uploadRes.status, uploadText.slice(0, 200));
+              console.warn("[Twitter] Falling back to URL-in-tweet method");
+              mediaFallbackUrl = imageUrl;
             } else {
-              console.warn("[Twitter] Media upload failed (continuing without media):", uploadData);
+              const uploadData = JSON.parse(uploadText);
+              if (uploadRes.ok && uploadData.media_id_string) {
+                mediaId = uploadData.media_id_string;
+                console.log("[Twitter] Media uploaded:", mediaId);
+              } else {
+                console.warn("[Twitter] Media upload failed, falling back to URL:", uploadData);
+                mediaFallbackUrl = imageUrl;
+              }
             }
           } catch (mediaErr) {
-            console.warn("[Twitter] Media upload error (continuing without media):", mediaErr);
+            console.warn("[Twitter] Media upload error, falling back to URL:", mediaErr);
+            mediaFallbackUrl = imageUrl;
           }
         }
 
         const postTweet = async (text: string, replyToId?: string) => {
-          const body: any = { text };
+          // 画像URLフォールバック: ツイート本文末尾にURLを追加（Twitter Card表示）
+          const tweetText = !mediaId && mediaFallbackUrl
+            ? `${text}\n${mediaFallbackUrl}`
+            : text;
+
+          const body: any = { text: tweetText };
           if (mediaId) body.media = { media_ids: [mediaId] };
           if (replyToId) body.reply = { in_reply_to_tweet_id: replyToId };
 
@@ -378,7 +398,13 @@ export async function postToSNS(
             headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
             body: JSON.stringify(body),
           });
-          const twitterData = await twitterRes.json();
+          const twitterText = await twitterRes.text();
+          let twitterData: any;
+          try {
+            twitterData = JSON.parse(twitterText);
+          } catch {
+            throw new Error(`Twitter API returned invalid JSON: ${twitterText.slice(0, 200)}`);
+          }
           if (!twitterRes.ok || twitterData.errors) {
             const errMsg = twitterData.errors?.[0]?.message || twitterData.detail || "Twitter API error";
             throw new Error(errMsg);
