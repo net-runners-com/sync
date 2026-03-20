@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Twitter, Instagram, Facebook, Link as LinkIcon, CheckCircle2, AlertCircle, Loader2, LogOut, Sun, Moon, Monitor } from "lucide-react";
+import { Twitter, Instagram, Facebook, Link as LinkIcon, CheckCircle2, AlertCircle, Loader2, LogOut, Sun, Moon, Monitor, X } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useTheme } from "@/lib/ThemeContext";
 
@@ -25,6 +25,35 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [twitterConfirmOpen, setTwitterConfirmOpen] = useState(false);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  const handleDisconnect = async (provider: string, providerAccountId: string) => {
+    if (!confirm(`このアカウントの連携を解除しますか？\n(${provider}: ${providerAccountId})`)) return;
+    const key = `${provider}:${providerAccountId}`;
+    setDisconnecting(key);
+    try {
+      const res = await fetch("/api/user/social-accounts", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, providerAccountId }),
+      });
+      if (res.ok) {
+        setSocialAccounts((prev) => {
+          const updated = { ...prev };
+          if (updated[provider]) {
+            updated[provider] = updated[provider]!.filter(
+              (a: any) => a.accountId !== providerAccountId
+            );
+          }
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDisconnecting(null);
+    }
+  };
 
   useEffect(() => {
     fetchSocialAccounts();
@@ -239,12 +268,24 @@ export default function SettingsPage() {
                                <div className="flex items-center gap-3">
                                  <CheckCircle2 size={18} className="text-green-500 flex-shrink-0" />
                                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                                   {acc.accountName || `アカウント (${acc.accountId})`}
+                                   {(acc as any).accountName || `アカウント (${acc.accountId})`}
                                  </span>
                                </div>
-                               <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded-full select-all">
-                                 ID: {acc.accountId}
-                               </span>
+                               <div className="flex items-center gap-2">
+                                 <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded-full select-all">
+                                   ID: {acc.accountId}
+                                 </span>
+                                 <button
+                                   onClick={() => handleDisconnect(platform.id, acc.accountId)}
+                                   disabled={disconnecting === `${platform.id}:${acc.accountId}`}
+                                   className="p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-40"
+                                   title="連携を解除する"
+                                 >
+                                   {disconnecting === `${platform.id}:${acc.accountId}`
+                                     ? <Loader2 size={14} className="animate-spin" />
+                                     : <X size={14} />}
+                                 </button>
+                               </div>
                              </div>
                            </div>
                         ))}
