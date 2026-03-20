@@ -1062,16 +1062,9 @@ TextInputNode.displayName = 'TextInputNode';
 // --- 画像入力ノード ---
 export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => {
   const { updateNodeData } = useReactFlow();
-  const [imageUrl, setImageUrl] = useState(data.imageUrl || '');
   const [preview, setPreview] = useState(data.imageUrl || '');
   const [uploading, setUploading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-
-  const applyUrl = (url: string) => {
-    setPreview(url);
-    setImageUrl(url);
-    updateNodeData(id, { imageUrl: url });
-  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1083,7 +1076,8 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const result = await res.json();
       if (res.ok && result.url) {
-        applyUrl(result.url);
+        setPreview(result.url);
+        updateNodeData(id, { imageUrl: result.url });
         toast.success("画像をアップロードしました");
       } else {
         throw new Error(result.error || "アップロードに失敗しました");
@@ -1108,28 +1102,18 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
             />
             {uploading && <span className="text-xs text-violet-500 flex items-center gap-1"><Loader2 size={12} className="animate-spin"/> アップロード中...</span>}
           </div>
-          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase mt-1">または外部URLを指定</label>
-          <div className="flex gap-2">
-            <input type="text" placeholder="https://example.com/image.jpg"
-              className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-violet-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-              value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} onBlur={() => applyUrl(imageUrl)} disabled={uploading}
-            />
-            <button onClick={() => applyUrl(imageUrl)} disabled={uploading}
-              className="px-3 py-1.5 bg-violet-500 hover:bg-violet-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors">
-              適用
-            </button>
-          </div>
           {preview ? (
             <div className="relative w-full h-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 cursor-zoom-in group"
               onClick={() => setModalOpen(true)}>
-              <img src={preview} alt="preview" className="w-full h-full object-cover transition-transform group-hover:scale-105" onError={() => setPreview('')}/>
+              <img src={preview} alt="preview" className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                onError={(e) => { console.warn('[ImageNode] Preview load error:', preview); setPreview(''); }}/>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <span className="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 bg-black/50 px-2 py-1 rounded-full">クリックして拡大</span>
               </div>
             </div>
           ) : (
             <div className="w-full h-32 rounded-lg border-2 border-dashed border-violet-200 dark:border-violet-800 flex items-center justify-center text-violet-400 text-xs">
-              <div className="text-center"><ImageIcon size={24} className="mx-auto mb-1 opacity-50"/><span>プレビュー</span></div>
+              <div className="text-center"><ImageIcon size={24} className="mx-auto mb-1 opacity-50"/><span>ファイルをアップロードしてください</span></div>
             </div>
           )}
         </div>
@@ -1158,16 +1142,9 @@ ImageInputNode.displayName = 'ImageInputNode';
 // --- 動画入力ノード ---
 export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => {
   const { updateNodeData } = useReactFlow();
-  const [videoUrl, setVideoUrl] = useState(data.videoUrl || '');
   const [preview, setPreview] = useState(data.videoUrl || '');
   const [uploading, setUploading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-
-  const applyUrl = (url: string) => {
-    setPreview(url);
-    setVideoUrl(url);
-    updateNodeData(id, { videoUrl: url });
-  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1179,7 +1156,8 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const result = await res.json();
       if (res.ok && result.url) {
-        applyUrl(result.url);
+        setPreview(result.url);
+        updateNodeData(id, { videoUrl: result.url });
         toast.success("動画をアップロードしました");
       } else {
         throw new Error(result.error || "アップロードに失敗しました");
@@ -1204,27 +1182,17 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
             />
             {uploading && <span className="text-xs text-orange-500 flex items-center gap-1"><Loader2 size={12} className="animate-spin"/> アップロード中...</span>}
           </div>
-          <label className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase mt-1">または外部URLを指定</label>
-          <div className="flex gap-2">
-            <input type="text" placeholder="https://example.com/video.mp4"
-              className="nodrag flex-1 text-xs p-2 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:border-orange-400 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-              value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} onBlur={() => applyUrl(videoUrl)} disabled={uploading}
-            />
-            <button onClick={() => applyUrl(videoUrl)} disabled={uploading}
-              className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors">
-              適用
-            </button>
-          </div>
           {preview ? (
             <div className="relative group cursor-zoom-in" onClick={() => setModalOpen(true)}>
-              <video src={preview} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 max-h-40 pointer-events-none" onError={() => setPreview('')}/>
+              <video src={preview} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 max-h-40 pointer-events-none"
+                onError={(e) => { console.warn('[VideoNode] Preview load error:', preview); setPreview(''); }}/>
               <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                 <span className="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 bg-black/50 px-2 py-1 rounded-full">クリックして拡大</span>
               </div>
             </div>
           ) : (
             <div className="w-full h-24 rounded-lg border-2 border-dashed border-orange-200 dark:border-orange-800 flex items-center justify-center text-orange-400 text-xs">
-              <div className="text-center"><Video size={24} className="mx-auto mb-1 opacity-50"/><span>プレビュー</span></div>
+              <div className="text-center"><Video size={24} className="mx-auto mb-1 opacity-50"/><span>ファイルをアップロードしてください</span></div>
             </div>
           )}
           <div className="flex flex-wrap gap-1 mt-1">

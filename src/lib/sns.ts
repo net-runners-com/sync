@@ -334,12 +334,9 @@ export async function postToSNS(
       }
       
       case "twitter": {
-        // メディアURLがある場合はメディアアップロードを試みる
-        // ⚠️ Twitter Media Upload v1.1 は OAuth 1.0aが必要で、
-        //    OAuth 2.0 Bearer Token では動作しない。
-        //    そのためアップロード失敗時は画像URLをツイート本文末尾に追加するフォールバックを使用。
+        // ⚠️ Twitter Media Upload v1.1 は OAuth 1.0aが必要で Bearer Tokenでは動作しない。
+        //    アップロード失敗時は画像なしでツイートする。
         let mediaId: string | undefined;
-        let mediaFallbackUrl: string | undefined;
 
         if (imageUrl) {
           try {
@@ -364,32 +361,23 @@ export async function postToSNS(
             // レスポンスが空またはJSONでない場合を安全に処理
             const uploadText = await uploadRes.text();
             if (!uploadText || !uploadText.trim().startsWith("{")) {
-              console.warn("[Twitter] Media upload returned non-JSON response (OAuth 1.0a required for v1.1):", uploadRes.status, uploadText.slice(0, 200));
-              console.warn("[Twitter] Falling back to URL-in-tweet method");
-              mediaFallbackUrl = imageUrl;
+              console.warn("[Twitter] Media upload returned non-JSON (OAuth 1.0a required):", uploadRes.status, uploadText.slice(0, 200));
             } else {
               const uploadData = JSON.parse(uploadText);
               if (uploadRes.ok && uploadData.media_id_string) {
                 mediaId = uploadData.media_id_string;
                 console.log("[Twitter] Media uploaded:", mediaId);
               } else {
-                console.warn("[Twitter] Media upload failed, falling back to URL:", uploadData);
-                mediaFallbackUrl = imageUrl;
+                console.warn("[Twitter] Media upload failed:", uploadData);
               }
             }
           } catch (mediaErr) {
-            console.warn("[Twitter] Media upload error, falling back to URL:", mediaErr);
-            mediaFallbackUrl = imageUrl;
+            console.warn("[Twitter] Media upload error:", mediaErr);
           }
         }
 
         const postTweet = async (text: string, replyToId?: string) => {
-          // 画像URLフォールバック: ツイート本文末尾にURLを追加（Twitter Card表示）
-          const tweetText = !mediaId && mediaFallbackUrl
-            ? `${text}\n${mediaFallbackUrl}`
-            : text;
-
-          const body: any = { text: tweetText };
+          const body: any = { text };
           if (mediaId) body.media = { media_ids: [mediaId] };
           if (replyToId) body.reply = { in_reply_to_tweet_id: replyToId };
 
