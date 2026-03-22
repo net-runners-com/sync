@@ -75,52 +75,21 @@ ipcMain.handle('x-login', () => {
   });
 });
 
-// Instagram ログイン
+// Instagram ログイン（X と同じ openLoginWindow 方式）
 ipcMain.handle('instagram-login', () => {
-  return new Promise((resolve) => {
-    const loginWin = new BrowserWindow({
-      width: 800,
-      height: 700,
-      title: 'Instagram ログイン',
-      webPreferences: { nodeIntegration: false, contextIsolation: true },
-    });
-
-    loginWin.loadURL('https://www.instagram.com/#');
-
-    // sessionid Cookieが現れるまでポーリング（最大5分）
-    let done = false;
-    const poll = setInterval(async () => {
-      try {
-        const cookies = await session.defaultSession.cookies.get({ domain: '.instagram.com' });
-        const sessionId = cookies.find(c => c.name === 'sessionid')?.value;
-        const dsUserId = cookies.find(c => c.name === 'ds_user_id')?.value;
-        const csrftoken = cookies.find(c => c.name === 'csrftoken')?.value;
-        if (sessionId && dsUserId && !done) {
-          done = true;
-          clearInterval(poll);
-          loginWin.close();
-          resolve({ success: true, sessionId, dsUserId, csrftoken });
-        }
-      } catch { /* ignore */ }
-    }, 1000);
-
-    // 5分タイムアウト
-    setTimeout(() => {
-      if (!done) {
-        done = true;
-        clearInterval(poll);
-        if (!loginWin.isDestroyed()) loginWin.close();
-        resolve({ success: false, error: 'タイムアウト: ログインが完了しませんでした' });
-      }
-    }, 300000);
-
-    loginWin.on('closed', () => {
-      if (!done) {
-        done = true;
-        clearInterval(poll);
-        resolve({ success: false, error: 'ウィンドウが閉じられました' });
-      }
-    });
+  return openLoginWindow({
+    loginUrl: 'https://www.instagram.com/accounts/login/',
+    title: 'Instagram ログイン',
+    // ログイン後 instagram.com/ (ホーム) に遷移したら成功
+    successUrlPattern: /instagram\.com\/(accounts\/onetap|$)|\binstagram\.com\/(?!accounts\/login)/,
+    cookieDomains: ['.instagram.com'],
+    getCookies: async (cookies) => {
+      const sessionId = cookies['sessionid'];
+      const dsUserId = cookies['ds_user_id'];
+      const csrftoken = cookies['csrftoken'];
+      if (sessionId && dsUserId) return { success: true, sessionId, dsUserId, csrftoken };
+      return { success: false, error: 'sessionid/ds_user_id Cookieが見つかりません' };
+    },
   });
 });
 
