@@ -35,6 +35,8 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieDomains, ge
     const checkNavigation = async (url) => {
       if (successUrlPattern.test(url)) {
         try {
+          // Cookieがセッションにコミットされるまで少し待つ
+          await new Promise(r => setTimeout(r, 1500));
           const allCookies = {};
           for (const domain of cookieDomains) {
             const cookies = await session.defaultSession.cookies.get({ domain });
@@ -99,7 +101,7 @@ ipcMain.handle('facebook-login', () => {
     loginUrl: 'https://www.facebook.com/login',
     title: 'Facebook ログイン',
     successUrlPattern: /facebook\.com(?!\/(login|r\.php))/,
-    cookieDomains: ['.facebook.com'],
+    cookieDomains: ['.facebook.com', 'www.facebook.com'],
     getCookies: async (cookies) => {
       const cUser = cookies['c_user'];
       const xs = cookies['xs'];
