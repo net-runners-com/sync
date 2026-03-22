@@ -122,6 +122,39 @@ export const authOptions: NextAuthOptions = {
       },
     },
   ],
+  // 本番環境でOAuth state cookieが消える問題を防ぐ
+  // Facebook等のOAuthはリダイレクト時にSameSite=Lax cookieが破棄されるため
+  ...(process.env.NODE_ENV === "production" && {
+    cookies: {
+      pkceCodeVerifier: {
+        name: "next-auth.pkce.code_verifier",
+        options: {
+          httpOnly: true,
+          sameSite: "none" as const,
+          path: "/",
+          secure: true,
+        },
+      },
+      state: {
+        name: "next-auth.state",
+        options: {
+          httpOnly: true,
+          sameSite: "none" as const,
+          path: "/",
+          secure: true,
+        },
+      },
+      callbackUrl: {
+        name: "next-auth.callback-url",
+        options: {
+          httpOnly: true,
+          sameSite: "none" as const,
+          path: "/",
+          secure: true,
+        },
+      },
+    },
+  }),
   session: {
     strategy: "jwt",
   },
