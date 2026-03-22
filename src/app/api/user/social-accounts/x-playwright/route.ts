@@ -56,8 +56,9 @@ export async function POST() {
   let browser: any = null;
 
   try {
+    // CDP接続には通常のplaywrightを使用（既存の実Chromeに接続するため検知回避パッチは不要）
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { chromium } = require("rebrowser-playwright");
+    const { chromium } = require("playwright");
 
     // Step 1: 既存ChromeをCDPモードで起動（初回のみ）
     await launchChromeWithCDP();
