@@ -1,5 +1,46 @@
 import { chromium } from "playwright";
 import { prisma } from "@/lib/prisma";
+import fs from "fs";
+import path from "path";
+
+async function fetchImageBuffer(url: string): Promise<{ buffer: Buffer; mimeType: string; filename: string }> {
+  if (url.startsWith("http")) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Failed to fetch image from URL");
+    const arrayBuffer = await response.arrayBuffer();
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    const extension = contentType.split("/")[1] || "jpg";
+    return {
+      buffer: Buffer.from(arrayBuffer),
+      mimeType: contentType,
+      filename: `image.${extension}`
+    };
+  } else if (url.startsWith("data:image")) {
+    const matches = url.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!matches) throw new Error("Invalid base64 image data");
+    const mimeType = matches[1];
+    const extension = mimeType.split("/")[1] || "jpg";
+    const base64Data = matches[2];
+    return {
+      buffer: Buffer.from(base64Data, "base64"),
+      mimeType,
+      filename: `image.${extension}`
+    };
+  } else {
+    // ローカルファイル想定
+    let filePath = url;
+    if (url.startsWith("/")) {
+      filePath = path.join(process.cwd(), "public", url);
+    } else {
+      filePath = path.resolve(process.cwd(), url);
+    }
+    const buffer = fs.readFileSync(filePath);
+    const extension = path.extname(filePath).slice(1) || "jpg";
+    let mimeType = `image/${extension}`;
+    if (extension === "jpg") mimeType = "image/jpeg";
+    return { buffer, mimeType, filename: path.basename(filePath) || `image.${extension}` };
+  }
+}
 
 export async function postToTwitterWithPlaywright(
   userId: string,
@@ -94,8 +135,29 @@ export async function postToTwitterWithPlaywright(
     console.log("[Playwright X] Typing message...");
     await page.fill(textboxSelector, message);
 
-    // TODO: 画像投稿とスレッド対応は一旦基本の投稿が成功することを確認してから拡張する
-    // 今回は最もシンプルなテキスト投稿の動作確認を優先します
+    // 画像のアップロード処理
+    if (imageUrl) {
+      console.log("[Playwright X] Fetching and uploading image...", imageUrl);
+      try {
+        const { buffer, mimeType, filename } = await fetchImageBuffer(imageUrl);
+        const fileInputSelector = 'input[type="file"]';
+        
+        // input[type="file"]要素は不可視であることもあるため、attached状態で待機
+        await page.waitForSelector(fileInputSelector, { state: 'attached', timeout: 5000 });
+        
+        await page.setInputFiles(fileInputSelector, {
+          name: filename,
+          mimeType: mimeType,
+          buffer: buffer,
+        });
+        
+        console.log("[Playwright X] Image uploaded to form, waiting for preview...");
+        await page.waitForTimeout(3000); // プレビュー画像がUIに反映されるのを待機
+      } catch (imgError) {
+        console.error("[Playwright X] Failed to upload image:", imgError);
+        // 画像エラーでもテキスト投稿自体は続行する
+      }
+    }
 
     // 投稿ボタンをクリック
     console.log("[Playwright X] Clicking post button...");
