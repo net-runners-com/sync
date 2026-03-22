@@ -36,29 +36,40 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCo
 
     const checkNavigation = async (url) => {
       if (settled || loginWin.isDestroyed()) return;
-      if (successUrlPattern.test(url)) {
-        try {
-          // Cookieがセッションにコミットされるまで少し待つ
-          await new Promise(r => setTimeout(r, 2000));
-          // await後にウィンドウが閉じられていないか再確認
-          if (settled || loginWin.isDestroyed()) return;
-          const allCookies = {};
-          for (const cookieUrl of cookieUrls) {
-            const cookies = await session.defaultSession.cookies.get({ url: cookieUrl });
-            cookies.forEach(c => { allCookies[c.name] = c.value; });
-          }
-          const result = await getCookies(allCookies);
+
+      // URLの判定、またはCookie（ログインセッション）が揃っているかの判定を行う
+      let isSuccessUrl = false;
+      if (successUrlPattern && successUrlPattern.test(url)) {
+        isSuccessUrl = true;
+      }
+
+      // Xの仕様変更等で/homeにリダイレクトされないケースを想定し、Cookieの存在を直接確認する
+      try {
+        // Cookieがセッションにコミットされるまで少し待つ
+        await new Promise(r => setTimeout(r, 2000));
+        // await後にウィンドウが閉じられていないか再確認
+        if (settled || loginWin.isDestroyed()) return;
+
+        const allCookies = {};
+        for (const cookieUrl of cookieUrls) {
+          const cookies = await session.defaultSession.cookies.get({ url: cookieUrl });
+          cookies.forEach(c => { allCookies[c.name] = c.value; });
+        }
+        
+        const result = await getCookies(allCookies);
+
+        // URLが一致したか、またはCookieが完全に揃っていればログイン完了とみなす
+        if (isSuccessUrl || result.success) {
           if (settled || loginWin.isDestroyed()) return;
           settled = true;
           loginWin.close();
+          
+          // result.successがfalseでも、URLが一致した場合はその結果（エラー）を返す
           resolve(result);
-        } catch (err) {
-          if (!settled && !loginWin.isDestroyed()) {
-            settled = true;
-            loginWin.close();
-          }
-          resolve({ success: false, error: err.message });
         }
+      } catch (err) {
+        // エラー時は何もしない（次のナビゲーションでリトライする）
+        console.error("Navigation cookie check error:", err.message);
       }
     };
 
