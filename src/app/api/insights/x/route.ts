@@ -2,16 +2,16 @@
  * /api/insights/x/route.ts
  * X(Twitter)インサイト取得APIルート
  *
- * - auth_token + ct0 Cookie を使って Twitter 内部APIを直接fetch
- * - agent-twitter-client の setCookies domain 問題を完全回避
+ * - agent-twitter-client を使用してCookie認証でデータ取得
  * - 12時間キャッシュでBANリスクを最小化
+ * - DB保存: SocialInsightsテーブル (userId + "twitter")
  */
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getXCookies } from "@/lib/x-scraper";
-import { fetchXInsightsDirect } from "@/lib/x-insights";
+import { getXCookies, createXScraper } from "@/lib/x-scraper";
+import { fetchXInsights } from "@/lib/x-insights";
 
 const CACHE_HOURS = 12;
 
@@ -49,9 +49,24 @@ export async function GET(req: Request) {
     );
   }
 
-  // ─── Twitter内部APIを直接fetch ───────────────
+  // ─── agent-twitter-client でデータ取得 ───────
   try {
-    const insights = await fetchXInsightsDirect(cookies.authToken, cookies.ct0);
+    const scraper = await createXScraper(cookies);
+
+    const isLoggedIn = await scraper.isLoggedIn();
+    if (!isLoggedIn) {
+      return NextResponse.json(
+        { error: "Xのセッションが切れています。設定から再連携してください。" },
+        { status: 401 }
+      );
+    }
+
+    const meUsername = (await scraper.me())?.username;
+    if (!meUsername) {
+      return NextResponse.json({ error: "ユーザー名の取得に失敗しました" }, { status: 500 });
+    }
+
+    const insights = await fetchXInsights(scraper, meUsername);
 
     await prisma.socialInsights.upsert({
       where: { userId_platform: { userId: session.user.id, platform: "twitter" } },
