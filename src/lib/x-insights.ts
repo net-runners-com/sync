@@ -52,10 +52,25 @@ export async function fetchXInsightsDirect(
   authToken: string,
   ct0: string
 ): Promise<XInsightsData> {
+  // Twitter WebアプリのSame-Origin内部APIパスを使用
+  // api.twitter.com はサーバー側cookie認証を拒否するため twitter.com/i/api を使う
+  const BASE = "https://twitter.com/i/api/1.1";
+
+  const headers: Record<string, string> = {
+    "Cookie": `auth_token=${authToken}; ct0=${ct0}`,
+    "x-csrf-token": ct0,
+    "x-twitter-active-user": "yes",
+    "x-twitter-auth-type": "OAuth2Session",
+    "Content-Type": "application/json",
+    "Referer": "https://twitter.com/",
+    "Origin": "https://twitter.com",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+  };
+
   // 1. verify_credentials でプロフィール取得
   const vcRes = await fetch(
-    "https://api.twitter.com/1.1/account/verify_credentials.json?include_entities=false&skip_status=true",
-    { headers: xHeaders(authToken, ct0) }
+    `${BASE}/account/verify_credentials.json?include_entities=false&skip_status=true`,
+    { headers }
   );
 
   if (!vcRes.ok) {
@@ -78,12 +93,12 @@ export async function fetchXInsightsDirect(
     biography: vc.description ?? null,
   };
 
-  // 2. 最近のツイートを取得（いいね・RT・表示数）
+  // 2. 最近のツイートを取得
   let recentTweets: XTweetMetrics[] = [];
   try {
     const tlRes = await fetch(
-      `https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=${profile.screenName}&count=10&tweet_mode=extended&exclude_replies=false`,
-      { headers: xHeaders(authToken, ct0) }
+      `${BASE}/statuses/user_timeline.json?screen_name=${profile.screenName}&count=10&tweet_mode=extended`,
+      { headers }
     );
     if (tlRes.ok) {
       const tweets = await tlRes.json();
@@ -93,22 +108,16 @@ export async function fetchXInsightsDirect(
           text: (t.full_text ?? t.text ?? "").slice(0, 200),
           likes: t.favorite_count ?? 0,
           retweets: t.retweet_count ?? 0,
-          views: null, // v1.1 APIはviews非対応（Premiumのみ）
+          views: null, // v1.1はviews非対応
           replies: 0,
           createdAt: t.created_at ?? null,
         }));
       }
     }
   } catch {
-    // タイムライン取得失敗は無視（プロフィールだけ返す）
+    // タイムライン取得失敗は無視
   }
 
-  return {
-    profile,
-    recentTweets,
-    fetchedAt: new Date().toISOString(),
-  };
+  return { profile, recentTweets, fetchedAt: new Date().toISOString() };
 }
 
-// agent-twitter-client 版（将来的な使用のために残す）
-export type { XProfile as XProfileType };
