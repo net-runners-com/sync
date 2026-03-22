@@ -105,7 +105,8 @@ export async function postToTwitterWithPlaywright(
       args: ['--window-size=1000,800'] 
     });
     const context = await browser.newContext({
-      viewport: { width: 1000, height: 800 }
+      viewport: { width: 1000, height: 800 },
+      permissions: ["clipboard-read", "clipboard-write"]
     });
     await context.addCookies(cookies);
 
@@ -131,54 +132,69 @@ export async function postToTwitterWithPlaywright(
     const textboxSelector = '[data-testid="tweetTextarea_0"]';
     await page.waitForSelector(textboxSelector, { timeout: 15000 });
 
-    // メッセージを入力
-    console.log("[Playwright X] Typing message...");
-    await page.fill(textboxSelector, message);
+    // テキストがあれば入力する
+    if (message && message.trim() !== "") {
+      console.log("[Playwright X] Typing message...");
+      await page.fill(textboxSelector, message);
+      await page.waitForTimeout(500); // UIへの反映待ち
+    }
 
-    // 画像のアップロード処理 (クリップボード貼り付けをエミュレート)
+    // 画像のアップロード処理 (OS標準のクリップボードNative Pasteを完全エミュレート)
     if (imageUrl) {
-      console.log("[Playwright X] Fetching and uploading image via Paste...", imageUrl);
+      console.log("[Playwright X] Fetching and uploading image via Native Paste...", imageUrl);
       try {
-        const { buffer, mimeType, filename } = await fetchImageBuffer(imageUrl);
+        const { buffer, mimeType } = await fetchImageBuffer(imageUrl);
         
         const base64Data = buffer.toString("base64");
         
-        // テキストエリアにフォーカスを当てる
-        await page.focus(textboxSelector);
-
-        // ブラウザのコンテキスト内でPasteイベントをディスパッチする
+        // ブラウザのネイティブクリップボードAPIを使用してOSクリップボードに画像をセットする
         await page.evaluate(
-          ({ base64Data, mimeType, filename, textboxSelector }) => {
-            const byteString = atob(base64Data);
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-              ia[i] = byteString.charCodeAt(i);
-            }
-            const blob = new Blob([ab], { type: mimeType });
-            const file = new File([blob], filename, { type: mimeType });
-
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-
-            const targetElement = document.querySelector(textboxSelector) || document.activeElement;
-            if (targetElement) {
-              const pasteEvent = new ClipboardEvent("paste", {
-                clipboardData: dataTransfer,
-                bubbles: true,
-                cancelable: true,
-              });
-              targetElement.dispatchEvent(pasteEvent);
-            }
+          async ({ base64Data, mimeType }) => {
+            return new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => {
+                try {
+                  const canvas = document.createElement("canvas");
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  const ctx = canvas.getContext("2d");
+                  if (!ctx) throw new Error("Canvas context is null");
+                  ctx.drawImage(img, 0, 0);
+                  
+                  // ClipboardItemはimage/pngに標準対応しているためPNG変換してクリップボードに書き込む
+                  canvas.toBlob(async (blob) => {
+                    if (!blob) return reject("Blob creation failed");
+                    try {
+                      const item = new window.ClipboardItem({ "image/png": blob });
+                      await navigator.clipboard.write([item]);
+                      resolve(true);
+                    } catch (err: any) {
+                      reject("Clipboard write failed: " + err.message);
+                    }
+                  }, "image/png");
+                } catch (e: any) {
+                  reject(e.message);
+                }
+              };
+              img.onerror = () => reject("Image loading failed inside evaluate");
+              img.src = `data:${mimeType};base64,${base64Data}`;
+            });
           },
-          { base64Data, mimeType, filename, textboxSelector }
+          { base64Data, mimeType }
         );
         
-        console.log("[Playwright X] Image pasted to textarea, waiting for preview...");
+        // Xの入力欄に再度フォーカスを当てる
+        await page.focus(textboxSelector);
+        
+        // Mac環境 (Meta+V) をエミュレートして貼り付けイベントを完全発火させる
+        console.log("[Playwright X] Pressing Meta+V to paste image...");
+        await page.keyboard.press("Meta+V");
+
+        console.log("[Playwright X] Image pasted to textarea natively, waiting for preview...");
         await page.waitForTimeout(3000); // プレビュー画像がUIに反映されるのを待機
       } catch (imgError) {
-        console.error("[Playwright X] Failed to upload image via Paste:", imgError);
-        // 画像エラーでもテキスト投稿自体は続行する
+        console.error("[Playwright X] Failed to upload image via Native Paste:", imgError);
+        // 画像エラーでもテキスト等の投稿処理は続行する
       }
     }
 

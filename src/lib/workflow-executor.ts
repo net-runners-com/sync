@@ -42,7 +42,7 @@ export async function runWorkflow(workflowId: string, userId: string) {
       console.log(`[Workflow: ${workflowId}] テキスト生成中... モデル: ${model}`);
       generatedText = await generateTextWithAI(prompt, model);
     } else {
-      generatedText = "Syncワークフローからの自動投稿です。";
+      generatedText = "";
     }
 
     const imageInputNode = nodes.find((n: any) => n.type === "imageInputNode");
