@@ -40,19 +40,23 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCo
         try {
           // Cookieがセッションにコミットされるまで少し待つ
           await new Promise(r => setTimeout(r, 2000));
+          // await後にウィンドウが閉じられていないか再確認
+          if (settled || loginWin.isDestroyed()) return;
           const allCookies = {};
           for (const cookieUrl of cookieUrls) {
-            // urlで指定することで確実にそのサイトのCookieを取得
             const cookies = await session.defaultSession.cookies.get({ url: cookieUrl });
             cookies.forEach(c => { allCookies[c.name] = c.value; });
           }
           const result = await getCookies(allCookies);
+          if (settled || loginWin.isDestroyed()) return;
           settled = true;
           loginWin.close();
           resolve(result);
         } catch (err) {
-          settled = true;
-          loginWin.close();
+          if (!settled && !loginWin.isDestroyed()) {
+            settled = true;
+            loginWin.close();
+          }
           resolve({ success: false, error: err.message });
         }
       }
@@ -105,7 +109,8 @@ ipcMain.handle('facebook-login', () => {
   return openLoginWindow({
     loginUrl: 'https://www.facebook.com/login',
     title: 'Facebook ログイン',
-    successUrlPattern: /facebook\.com(?!\/(login|r\.php))/,
+    // checkpoint・recovery・reCAPTCHAページは除外、ホーム("/")に遷移したら成功
+    successUrlPattern: /facebook\.com\/(?!(login|r\.php|checkpoint|recover|two_step|privacy|help|dialog))/,
     cookieUrls: ['https://www.facebook.com', 'https://facebook.com'],
     getCookies: async (cookies) => {
       const cUser = cookies['c_user'];
