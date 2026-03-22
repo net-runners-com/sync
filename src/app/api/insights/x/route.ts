@@ -58,27 +58,25 @@ export async function GET(req: Request) {
     console.log("[X-Login-Debug] Parsed cookies count:", parsedCookies.length);
     console.log("[X-Login-Debug] Cookie example:", parsedCookies.map(c => `${c.key}=***; domain=${c.domain}`).join(", "));
 
-    // ★ TEST: Can we fetch settings.json directly?
+    // ★ TEST: GraphQL (UserByRestId) 動作チェック
+    scraper.isLoggedIn = async () => true;
+    if ((scraper as any).auth) {
+      (scraper as any).auth.isLoggedIn = async () => true;
+    }
     try {
-      const res = await fetch("https://api.twitter.com/1.1/account/settings.json", {
-        headers: {
-          "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-          "Cookie": `auth_token=${cookies.authToken}; ct0=${cookies.ct0}`,
-          "x-csrf-token": cookies.ct0,
-          "x-twitter-active-user": "yes",
-          "x-twitter-auth-type": "OAuth2Session",
-          "Content-Type": "application/json",
-        }
-      });
-      console.log("[X-Login-Debug] settings.json status:", res.status);
-      if (res.ok) {
-        const data = await res.json();
-        console.log("[X-Login-Debug] settings screen_name:", data.screen_name);
-      } else {
-        console.log("[X-Login-Debug] settings.json error body:", await res.text());
+      // 既存のOAuthから得たユーザーIDでテスト
+      const testUserId = "1983732467506016259";
+      console.log("[X-Login-Debug] Testing getScreenNameByUserId for", testUserId);
+      const testScreenName = await scraper.getScreenNameByUserId(testUserId);
+      console.log("[X-Login-Debug] testScreenName:", testScreenName);
+      
+      if (testScreenName) {
+        console.log("[X-Login-Debug] Testing getProfile for", testScreenName);
+        const testProfile = await scraper.getProfile(testScreenName);
+        console.log("[X-Login-Debug] testProfile name:", testProfile.name);
       }
     } catch (e) {
-      console.log("[X-Login-Debug] settings.json fetch failed", e);
+      console.log("[X-Login-Debug] GraphQL test failed", e);
     }
 
     const isLoggedIn = await scraper.isLoggedIn();
