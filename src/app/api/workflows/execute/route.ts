@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { inngest } from "@/inngest/client";
+import { runWorkflow } from "@/lib/workflow-executor";
 
-// Inngestにイベントを送信し、ワークフローをバックグラウンド実行する
+// バックグラウンドでローカルPC上で直接ワークフローを実行する
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,16 +17,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "workflowId is required" }, { status: 400 });
     }
 
-    // イベントパブリッシュ
-    await inngest.send({
-      name: "app/workflow.execute",
-      data: {
-        workflowId,
-        userId: session.user.id,
-      },
+    // Inngestを使わず、ローカルPCのバックグラウンドとして非同期で実行を開始する
+    // awaitせずに実行を投げることで、Next.jsインスタンス上でバックグラウンド動作します
+    runWorkflow(workflowId, session.user.id).catch((err) => {
+      console.error("[Background Workflow Error]", err);
     });
 
-    return NextResponse.json({ success: true, message: "Workflow execution started" });
+    return NextResponse.json({ success: true, message: "Workflow background execution started" });
   } catch (error) {
     console.error("Workflow Execution Error:", error);
     return NextResponse.json({ error: "Failed to start workflow" }, { status: 500 });
