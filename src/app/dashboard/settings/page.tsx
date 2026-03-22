@@ -417,48 +417,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* X (Twitter) Playwright ログイン */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0">
-              <Twitter className="w-6 h-6 text-slate-800 dark:text-slate-200" fill="currentColor" />
-            </div>
-            <div className="flex-1">
-              <h2 className="font-bold text-slate-900 dark:text-white text-base mb-1">
-                X (Twitter) — ブラウザ自動化でログイン（推奨）
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                APIキーなしで連携できます。Chromeが自動的に起動するので、X.comで通常通りログインしてください。
-                ログイン後、自動的にCookieを保存して連携を完了します。
-              </p>
 
-              {xPlaywrightResult?.username && (
-                <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg mb-3">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>@{xPlaywrightResult.username} で連携しました！</span>
-                </div>
-              )}
-              {xPlaywrightResult?.error && (
-                <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg mb-3">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{xPlaywrightResult.error}</span>
-                </div>
-              )}
-
-              <button
-                onClick={handleConnectPlaywright}
-                disabled={xPlaywrightLoading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm shadow-sm"
-              >
-                {xPlaywrightLoading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />Chromeを起動中…ログインを完了してください</>
-                ) : (
-                  <><Twitter className="w-4 h-4" fill="currentColor" />Chromeを起動してXにログイン</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* スコープの説明 */}
 
