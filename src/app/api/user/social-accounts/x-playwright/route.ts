@@ -47,10 +47,8 @@ export async function POST() {
       console.log("[X-Playwright] ※ 「Googleでサインイン」は使わないでください。");
 
       // ログイン完了（x.com/home に遷移）したら自動的に続行
-      await page.waitForFunction(
-        () => window.location.href.includes("x.com/home"),
-        { timeout: 300000 } // 最大5分待機
-      );
+      // waitForFunction は X.com の CSP (unsafe-eval 禁止) でブロックされるため waitForURL を使用
+      await page.waitForURL(/x\.com\/home/, { timeout: 300000 });
     }
 
     console.log("[X-Playwright] Logged in! Fetching cookies...");
