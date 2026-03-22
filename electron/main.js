@@ -18,12 +18,12 @@ function createWindow() {
 }
 
 // ソーシャルログインウィンドウ共通関数
-function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCookies }) {
+function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCookies, manualCloseMode = false }) {
   return new Promise((resolve) => {
     const loginWin = new BrowserWindow({
       width: 800,
       height: 700,
-      title,
+      title: manualCloseMode ? `${title} (ログイン完了後手動で閉じてください)` : title,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -36,18 +36,15 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCo
 
     const checkNavigation = async (url) => {
       if (settled || loginWin.isDestroyed()) return;
+      if (manualCloseMode) return; // 手動クローズモード時は自動判定を行わない
 
-      // URLの判定、またはCookie（ログインセッション）が揃っているかの判定を行う
       let isSuccessUrl = false;
       if (successUrlPattern && successUrlPattern.test(url)) {
         isSuccessUrl = true;
       }
 
-      // Xの仕様変更等で/homeにリダイレクトされないケースを想定し、Cookieの存在を直接確認する
       try {
-        // Cookieがセッションにコミットされるまで少し待つ
         await new Promise(r => setTimeout(r, 2000));
-        // await後にウィンドウが閉じられていないか再確認
         if (settled || loginWin.isDestroyed()) return;
 
         const allCookies = {};
@@ -58,17 +55,13 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCo
         
         const result = await getCookies(allCookies, url);
 
-        // URLが一致したか、またはCookieが完全に揃っていればログイン完了とみなす
         if (isSuccessUrl || result.success) {
           if (settled || loginWin.isDestroyed()) return;
           settled = true;
           loginWin.close();
-          
-          // result.successがfalseでも、URLが一致した場合はその結果（エラー）を返す
           resolve(result);
         }
       } catch (err) {
-        // エラー時は何もしない（次のナビゲーションでリトライする）
         console.error("Navigation cookie check error:", err.message);
       }
     };
@@ -76,8 +69,26 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCo
     loginWin.webContents.on('did-navigate', (event, url) => checkNavigation(url));
     loginWin.webContents.on('did-navigate-in-page', (event, url) => checkNavigation(url));
 
-    loginWin.on('closed', () => {
-      if (!settled) resolve({ success: false, error: 'ウィンドウが閉じられました' });
+    loginWin.on('closed', async () => {
+      if (!settled) {
+        settled = true; // 状態を確定
+        if (manualCloseMode) {
+          try {
+            // 手動クローズ時に現在のCookieをすべて取り出して判定
+            const allCookies = {};
+            for (const cookieUrl of cookieUrls) {
+              const cookies = await session.defaultSession.cookies.get({ url: cookieUrl });
+              cookies.forEach(c => { allCookies[c.name] = c.value; });
+            }
+            const result = await getCookies(allCookies, "");
+            resolve(result);
+          } catch (e) {
+            resolve({ success: false, error: 'Cookie取得エラー: ' + e.message });
+          }
+        } else {
+          resolve({ success: false, error: 'ウィンドウが閉じられました' });
+        }
+      }
     });
   });
 }
@@ -158,18 +169,15 @@ ipcMain.handle('note-login', () => {
   return openLoginWindow({
     loginUrl: 'https://note.com/login',
     title: 'note ログイン',
-    successUrlPattern: /note\.com\/(home|)$/,
+    successUrlPattern: null,
     cookieUrls: ['https://note.com'],
-    getCookies: async (cookies, url) => {
-      // noteのログインセッションに必要なCookie群をすべて取得して返却します
-      // ただし、ログイン前(/login)にウィンドウが閉じてしまうのを防ぐため、/login 以外のページ（ログイン成功後）に遷移した時のみ成功とみなします
-      const currentUrl = url || "";
-      const isLoginProcess = currentUrl.includes("/login") || currentUrl.includes("/signup");
-      
-      if (!isLoginProcess && Object.keys(cookies).length > 0) {
+    manualCloseMode: true,
+    getCookies: async (cookies) => {
+      // 手動クローズ時に呼ばれ、存在するCookieをすべて返却します
+      if (Object.keys(cookies).length > 0) {
         return { success: true, allCookies: cookies };
       }
-      return { success: false, error: 'まだログインが完了していません' };
+      return { success: false, error: 'Cookieが見つかりません' };
     },
   });
 });
