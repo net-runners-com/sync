@@ -18,7 +18,7 @@ function createWindow() {
 }
 
 // ソーシャルログインウィンドウ共通関数
-function openLoginWindow({ loginUrl, title, successUrlPattern, cookieDomains, getCookies }) {
+function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCookies }) {
   return new Promise((resolve) => {
     const loginWin = new BrowserWindow({
       width: 800,
@@ -32,20 +32,26 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieDomains, ge
 
     loginWin.loadURL(loginUrl);
 
+    let settled = false;
+
     const checkNavigation = async (url) => {
+      if (settled) return;
       if (successUrlPattern.test(url)) {
         try {
           // Cookieがセッションにコミットされるまで少し待つ
-          await new Promise(r => setTimeout(r, 1500));
+          await new Promise(r => setTimeout(r, 2000));
           const allCookies = {};
-          for (const domain of cookieDomains) {
-            const cookies = await session.defaultSession.cookies.get({ domain });
+          for (const cookieUrl of cookieUrls) {
+            // urlで指定することで確実にそのサイトのCookieを取得
+            const cookies = await session.defaultSession.cookies.get({ url: cookieUrl });
             cookies.forEach(c => { allCookies[c.name] = c.value; });
           }
           const result = await getCookies(allCookies);
+          settled = true;
           loginWin.close();
           resolve(result);
         } catch (err) {
+          settled = true;
           loginWin.close();
           resolve({ success: false, error: err.message });
         }
@@ -56,7 +62,7 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieDomains, ge
     loginWin.webContents.on('did-navigate-in-page', (event, url) => checkNavigation(url));
 
     loginWin.on('closed', () => {
-      resolve({ success: false, error: 'ウィンドウが閉じられました' });
+      if (!settled) resolve({ success: false, error: 'ウィンドウが閉じられました' });
     });
   });
 }
@@ -67,7 +73,7 @@ ipcMain.handle('x-login', () => {
     loginUrl: 'https://x.com/i/flow/login',
     title: 'X (Twitter) ログイン',
     successUrlPattern: /x\.com\/home|twitter\.com\/home/,
-    cookieDomains: ['.x.com', '.twitter.com'],
+    cookieUrls: ['https://x.com', 'https://twitter.com'],
     getCookies: async (cookies) => {
       const authToken = cookies['auth_token'];
       const ct0 = cookies['ct0'];
@@ -82,9 +88,8 @@ ipcMain.handle('instagram-login', () => {
   return openLoginWindow({
     loginUrl: 'https://www.instagram.com/accounts/login/',
     title: 'Instagram ログイン',
-    // ログイン後 instagram.com/ (ホーム) に遷移したら成功
     successUrlPattern: /instagram\.com\/(accounts\/onetap|$)|\binstagram\.com\/(?!accounts\/login)/,
-    cookieDomains: ['.instagram.com'],
+    cookieUrls: ['https://www.instagram.com'],
     getCookies: async (cookies) => {
       const sessionId = cookies['sessionid'];
       const dsUserId = cookies['ds_user_id'];
@@ -101,7 +106,7 @@ ipcMain.handle('facebook-login', () => {
     loginUrl: 'https://www.facebook.com/login',
     title: 'Facebook ログイン',
     successUrlPattern: /facebook\.com(?!\/(login|r\.php))/,
-    cookieDomains: ['.facebook.com', 'www.facebook.com'],
+    cookieUrls: ['https://www.facebook.com', 'https://facebook.com'],
     getCookies: async (cookies) => {
       const cUser = cookies['c_user'];
       const xs = cookies['xs'];
@@ -120,7 +125,7 @@ ipcMain.handle('threads-login', () => {
     loginUrl: 'https://www.threads.com/login',
     title: 'Threads ログイン',
     successUrlPattern: /threads\.com(?!\/(login|accounts))/,
-    cookieDomains: ['.threads.com', '.instagram.com'],
+    cookieUrls: ['https://www.threads.com'],
     getCookies: async (cookies) => {
       const sessionId = cookies['sessionid'];
       const dsUserId = cookies['ds_user_id'];
