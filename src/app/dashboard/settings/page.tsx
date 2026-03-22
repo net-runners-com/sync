@@ -163,9 +163,25 @@ export default function SettingsPage() {
     setXPlaywrightLoading(true);
     setXPlaywrightResult(null);
     try {
-      // Playwrightでxのログイン画面を開き、ユーザーが手動ログイン後にCookieを保存する
+      const electronAPI = (window as any).electronAPI;
+      if (!electronAPI?.xLogin) {
+        setXPlaywrightResult({ error: "この機能はMacアプリ版でのみ使用できます。" });
+        return;
+      }
+
+      // Electron IPC でXログインウィンドウを開き、Cookieを取得
+      const result = await electronAPI.xLogin();
+
+      if (!result.success) {
+        setXPlaywrightResult({ error: result.error || "ログインに失敗しました" });
+        return;
+      }
+
+      // 取得したCookieをAPIに保存
       const res = await fetch("/api/user/social-accounts/x-playwright", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authToken: result.authToken, ct0: result.ct0 }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -180,6 +196,7 @@ export default function SettingsPage() {
       setXPlaywrightLoading(false);
     }
   };
+
   const handleConnectClick = (platformId: string, isConnected: boolean) => {
     if (platformId === "twitter" && isConnected) {
       setTwitterConfirmOpen(true);
