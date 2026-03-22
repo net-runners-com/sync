@@ -59,6 +59,30 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "twitter" | "instagram" | "facebook">("overview");
 
+  // Xリアルインサイト
+  const [xInsights, setXInsights] = useState<any>(null);
+  const [xLoading, setXLoading] = useState(false);
+  const [xError, setXError] = useState<string | null>(null);
+  const [xFetchedAt, setXFetchedAt] = useState<string | null>(null);
+  const [xCached, setXCached] = useState(false);
+
+  const fetchXInsights = async (force = false) => {
+    setXLoading(true);
+    setXError(null);
+    try {
+      const res = await fetch(`/api/insights/x${force ? "?force=1" : ""}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "取得失敗");
+      setXInsights(json.data);
+      setXFetchedAt(json.fetchedAt || json.data?.fetchedAt || null);
+      setXCached(json.cached ?? false);
+    } catch (e: any) {
+      setXError(e.message);
+    } finally {
+      setXLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -74,6 +98,7 @@ export default function AnalyticsPage() {
     };
 
     fetchAnalytics();
+    fetchXInsights(); // Xインサイトも並行取得
   }, []);
 
   if (loading) {
@@ -198,6 +223,94 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="p-6 max-w-[1400px] mx-auto space-y-6">
+        {/* X (Twitter) リアルインサイトセクション */}
+        {activeTab === "twitter" && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Twitter className="w-5 h-5 text-slate-800 dark:text-slate-200" fill="currentColor" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-slate-900 dark:text-white">X (Twitter) アカウント</h2>
+                  {xFetchedAt && (
+                    <p className="text-xs text-slate-400">
+                      {xCached ? "📦 キャッシュ" : "✅ 最新"} — {new Date(xFetchedAt).toLocaleString("ja-JP")} 取得
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => fetchXInsights(true)}
+                disabled={xLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 transition disabled:opacity-50"
+              >
+                <RotateCcw className={`w-4 h-4 ${xLoading ? "animate-spin" : ""}`} />
+                {xLoading ? "取得中…" : "更新"}
+              </button>
+            </div>
+
+            {xLoading && !xInsights && (
+              <div className="flex items-center gap-3 text-slate-400 py-8 justify-center">
+                <Loader2 className="animate-spin w-5 h-5" />
+                <span className="text-sm">Playwright でXデータを取得中… (初回は30秒ほどかかります)</span>
+              </div>
+            )}
+
+            {xError && (
+              <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-4 py-3 rounded-xl mb-4">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{xError}</span>
+              </div>
+            )}
+
+            {xInsights && (
+              <>
+                {/* プロフィール */}
+                <div className="flex items-center gap-4 mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                  {xInsights.profileImageUrl && (
+                    <img
+                      src={xInsights.profileImageUrl.replace("_normal", "_bigger")}
+                      alt={xInsights.name}
+                      className="w-14 h-14 rounded-full border-2 border-slate-200 dark:border-slate-700"
+                    />
+                  )}
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-white text-lg">{xInsights.name}</p>
+                    <p className="text-slate-500 text-sm">@{xInsights.screenName}</p>
+                  </div>
+                </div>
+
+                {/* KPIカード */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 text-center border border-slate-100 dark:border-slate-700">
+                    <p className="text-xs text-slate-500 mb-2">フォロワー数</p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {xInsights.followersCount?.toLocaleString("ja-JP") ?? "—"}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 text-center border border-slate-100 dark:border-slate-700">
+                    <p className="text-xs text-slate-500 mb-2">フォロー中</p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {xInsights.followingCount?.toLocaleString("ja-JP") ?? "—"}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 text-center border border-slate-100 dark:border-slate-700">
+                    <p className="text-xs text-slate-500 mb-2">総ツイート数</p>
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {xInsights.tweetsCount?.toLocaleString("ja-JP") ?? "—"}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 mt-4 text-center">
+                  ⚠️ データは12時間ごとに更新されます。BANリスク低減のため意図的にキャッシュしています。
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
         {!isConnected ? (
           <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-slate-200 dark:border-slate-800">
             <h2 className="text-xl text-slate-900 dark:text-white mb-2">アカウントが連携されていません</h2>

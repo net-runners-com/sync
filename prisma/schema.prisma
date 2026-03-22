@@ -36,6 +36,7 @@ model User {
 
   workflows   Workflow[]
   customNodes CustomNode[]
+  socialInsights SocialInsights[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -145,4 +146,17 @@ model CustomNode {
   updatedAt   DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// SNSインサイトのキャッシュ（1日2回まで更新）
+model SocialInsights {
+  id        String   @id @default(cuid())
+  userId    String
+  platform  String   // "twitter" | "instagram" | "facebook" | "threads"
+  data      Json     // フォロワー数、インプレッションなどのJSON
+  fetchedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
 }
