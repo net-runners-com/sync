@@ -139,61 +139,38 @@ export async function postToTwitterWithPlaywright(
       await page.waitForTimeout(500); // UIへの反映待ち
     }
 
-    // 画像のアップロード処理 (OS標準のクリップボードNative Pasteを完全エミュレート)
+    // 画像のアップロード処理 (Mac標準のクリップボード経由でのNative Paste)
     if (imageUrl) {
-      console.log("[Playwright X] Fetching and uploading image via Native Paste...", imageUrl);
+      console.log("[Playwright X] Fetching and uploading image via Native OS Paste...", imageUrl);
       try {
-        const { buffer, mimeType } = await fetchImageBuffer(imageUrl);
+        const { buffer } = await fetchImageBuffer(imageUrl);
         
-        const base64Data = buffer.toString("base64");
-        
-        // ブラウザのネイティブクリップボードAPIを使用してOSクリップボードに画像をセットする
-        await page.evaluate(
-          async ({ base64Data, mimeType }) => {
-            return new Promise((resolve, reject) => {
-              const img = new Image();
-              img.onload = () => {
-                try {
-                  const canvas = document.createElement("canvas");
-                  canvas.width = img.width;
-                  canvas.height = img.height;
-                  const ctx = canvas.getContext("2d");
-                  if (!ctx) throw new Error("Canvas context is null");
-                  ctx.drawImage(img, 0, 0);
-                  
-                  // ClipboardItemはimage/pngに標準対応しているためPNG変換してクリップボードに書き込む
-                  canvas.toBlob(async (blob) => {
-                    if (!blob) return reject("Blob creation failed");
-                    try {
-                      const item = new window.ClipboardItem({ "image/png": blob });
-                      await navigator.clipboard.write([item]);
-                      resolve(true);
-                    } catch (err: any) {
-                      reject("Clipboard write failed: " + err.message);
-                    }
-                  }, "image/png");
-                } catch (e: any) {
-                  reject(e.message);
-                }
-              };
-              img.onerror = () => reject("Image loading failed inside evaluate");
-              img.src = `data:${mimeType};base64,${base64Data}`;
-            });
-          },
-          { base64Data, mimeType }
-        );
+        // テンポラリファイルとして保存し、osascript経由でMacの物理クリップボードにコピーする
+        const { execSync } = require("child_process");
+        const os = require("os");
+        const path = require("path");
+
+        const tempFilePath = path.join(os.tmpdir(), `x-playwright-upload-${Date.now()}.png`);
+        fs.writeFileSync(tempFilePath, buffer);
+
+        // Mac用: osascriptを使って画像をTIFFピクチャとしてクリップボードへ書き込む
+        console.log("[Playwright X] Setting image to macOS clipboard...");
+        execSync(`osascript -e 'set the clipboard to (read (POSIX file "${tempFilePath}") as TIFF picture)'`);
         
         // Xの入力欄に再度フォーカスを当てる
         await page.focus(textboxSelector);
         
         // Mac環境 (Meta+V) をエミュレートして貼り付けイベントを完全発火させる
-        console.log("[Playwright X] Pressing Meta+V to paste image...");
+        console.log("[Playwright X] Pressing Meta+V to paste image from OS clipboard...");
         await page.keyboard.press("Meta+V");
 
         console.log("[Playwright X] Image pasted to textarea natively, waiting for preview...");
         await page.waitForTimeout(3000); // プレビュー画像がUIに反映されるのを待機
+        
+        // 使用済みのテンポラリファイルを削除
+        try { fs.unlinkSync(tempFilePath); } catch (e) {}
       } catch (imgError) {
-        console.error("[Playwright X] Failed to upload image via Native Paste:", imgError);
+        console.error("[Playwright X] Failed to upload image via Native OS Paste:", imgError);
         // 画像エラーでもテキスト等の投稿処理は続行する
       }
     }
