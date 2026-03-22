@@ -56,7 +56,7 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCo
           cookies.forEach(c => { allCookies[c.name] = c.value; });
         }
         
-        const result = await getCookies(allCookies);
+        const result = await getCookies(allCookies, url);
 
         // URLが一致したか、またはCookieが完全に揃っていればログイン完了とみなす
         if (isSuccessUrl || result.success) {
@@ -160,12 +160,16 @@ ipcMain.handle('note-login', () => {
     title: 'note ログイン',
     successUrlPattern: /note\.com\/(home|)$/,
     cookieUrls: ['https://note.com'],
-    getCookies: async (cookies) => {
+    getCookies: async (cookies, url) => {
       // noteのログインセッションに必要なCookie群をすべて取得して返却します
-      if (Object.keys(cookies).length > 0) {
+      // ただし、ログイン前(/login)にウィンドウが閉じてしまうのを防ぐため、/login 以外のページ（ログイン成功後）に遷移した時のみ成功とみなします
+      const currentUrl = url || "";
+      const isLoginProcess = currentUrl.includes("/login") || currentUrl.includes("/signup");
+      
+      if (!isLoginProcess && Object.keys(cookies).length > 0) {
         return { success: true, allCookies: cookies };
       }
-      return { success: false, error: 'Cookieが見つかりません' };
+      return { success: false, error: 'まだログインが完了していません' };
     },
   });
 });
