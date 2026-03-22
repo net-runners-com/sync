@@ -52,11 +52,11 @@ export async function fetchXInsightsDirect(
   authToken: string,
   ct0: string
 ): Promise<XInsightsData> {
-  // Twitter WebアプリのSame-Origin内部APIパスを使用
-  // api.twitter.com はサーバー側cookie認証を拒否するため twitter.com/i/api を使う
-  const BASE = "https://twitter.com/i/api/1.1";
+  // api.twitter.com/1.1 を使用
+  const BASE = "https://api.twitter.com/1.1";
 
   const headers: Record<string, string> = {
+    "Authorization": `Bearer ${X_BEARER}`,
     "Cookie": `auth_token=${authToken}; ct0=${ct0}`,
     "x-csrf-token": ct0,
     "x-twitter-active-user": "yes",
