@@ -135,26 +135,49 @@ export async function postToTwitterWithPlaywright(
     console.log("[Playwright X] Typing message...");
     await page.fill(textboxSelector, message);
 
-    // 画像のアップロード処理
+    // 画像のアップロード処理 (クリップボード貼り付けをエミュレート)
     if (imageUrl) {
-      console.log("[Playwright X] Fetching and uploading image...", imageUrl);
+      console.log("[Playwright X] Fetching and uploading image via Paste...", imageUrl);
       try {
         const { buffer, mimeType, filename } = await fetchImageBuffer(imageUrl);
-        const fileInputSelector = 'input[type="file"]';
         
-        // input[type="file"]要素は不可視であることもあるため、attached状態で待機
-        await page.waitForSelector(fileInputSelector, { state: 'attached', timeout: 5000 });
+        const base64Data = buffer.toString("base64");
         
-        await page.setInputFiles(fileInputSelector, {
-          name: filename,
-          mimeType: mimeType,
-          buffer: buffer,
-        });
+        // テキストエリアにフォーカスを当てる
+        await page.focus(textboxSelector);
+
+        // ブラウザのコンテキスト内でPasteイベントをディスパッチする
+        await page.evaluate(
+          ({ base64Data, mimeType, filename, textboxSelector }) => {
+            const byteString = atob(base64Data);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: mimeType });
+            const file = new File([blob], filename, { type: mimeType });
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+
+            const targetElement = document.querySelector(textboxSelector) || document.activeElement;
+            if (targetElement) {
+              const pasteEvent = new ClipboardEvent("paste", {
+                clipboardData: dataTransfer,
+                bubbles: true,
+                cancelable: true,
+              });
+              targetElement.dispatchEvent(pasteEvent);
+            }
+          },
+          { base64Data, mimeType, filename, textboxSelector }
+        );
         
-        console.log("[Playwright X] Image uploaded to form, waiting for preview...");
+        console.log("[Playwright X] Image pasted to textarea, waiting for preview...");
         await page.waitForTimeout(3000); // プレビュー画像がUIに反映されるのを待機
       } catch (imgError) {
-        console.error("[Playwright X] Failed to upload image:", imgError);
+        console.error("[Playwright X] Failed to upload image via Paste:", imgError);
         // 画像エラーでもテキスト投稿自体は続行する
       }
     }
