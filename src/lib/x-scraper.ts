@@ -28,10 +28,10 @@ export async function getXCookies(userId: string): Promise<XCookies | null> {
 export async function createXScraper(cookies: XCookies): Promise<Scraper> {
   const scraper = new Scraper();
 
-  // name=value 形式の文字列で渡す（agent-twitter-clientが内部で紐付け）
+  // name=value 形式の文字列で渡すとき、DomainとPathが必須（tough-cookieがどのURLに送信するか判別するため）
   await scraper.setCookies([
-    `auth_token=${cookies.authToken}`,
-    `ct0=${cookies.ct0}`,
+    `auth_token=${cookies.authToken}; Domain=.twitter.com; Path=/; Secure; HttpOnly`,
+    `ct0=${cookies.ct0}; Domain=.twitter.com; Path=/; Secure; HttpOnly`,
   ]);
 
   return scraper;
