@@ -2,8 +2,11 @@
   "name": "sns-auto",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
+    "electron": "wait-on tcp:3000 && electron .",
+    "dev:electron": "concurrently -k \"npm run dev\" \"npm run electron\"",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
@@ -29,6 +32,7 @@
     "pg": "^8.20.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "rebrowser-playwright": "^1.52.0",
     "recharts": "^3.8.0",
     "shadcn": "^4.0.6",
     "sonner": "^2.0.7",
@@ -41,11 +45,16 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^5.22.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.4"
   }
 }
