@@ -35,7 +35,7 @@ function openLoginWindow({ loginUrl, title, successUrlPattern, cookieUrls, getCo
     let settled = false;
 
     const checkNavigation = async (url) => {
-      if (settled) return;
+      if (settled || loginWin.isDestroyed()) return;
       if (successUrlPattern.test(url)) {
         try {
           // Cookieがセッションにコミットされるまで少し待つ
