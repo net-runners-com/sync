@@ -52,16 +52,24 @@ export async function GET(req: Request) {
   // ─── agent-twitter-client でデータ取得 ───────
   try {
     const scraper = await createXScraper(cookies);
+    
+    // DEBUG: ParseされたCookieを確認
+    const parsedCookies = await scraper.getCookies();
+    console.log("[X-Login-Debug] Parsed cookies count:", parsedCookies.length);
+    console.log("[X-Login-Debug] Cookie example:", parsedCookies.map(c => `${c.key}=***; domain=${c.domain}`).join(", "));
 
     const isLoggedIn = await scraper.isLoggedIn();
+    console.log("[X-Login-Debug] isLoggedIn result:", isLoggedIn);
+    
     if (!isLoggedIn) {
       return NextResponse.json(
-        { error: "Xのセッションが切れています。設定から再連携してください。" },
+        { error: "Xのセッションが切れています。設定から再連携してください。（デバッグ中）" },
         { status: 401 }
       );
     }
 
     const meUsername = (await scraper.me())?.username;
+    console.log("[X-Login-Debug] meUsername:", meUsername);
     if (!meUsername) {
       return NextResponse.json({ error: "ユーザー名の取得に失敗しました" }, { status: 500 });
     }
@@ -90,3 +98,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: err.message ?? "取得失敗" }, { status: 500 });
   }
 }
+
