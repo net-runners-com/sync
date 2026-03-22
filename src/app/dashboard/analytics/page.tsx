@@ -292,16 +292,57 @@ export default function AnalyticsPage() {
                   <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 text-center border border-slate-100 dark:border-slate-700">
                     <p className="text-xs text-slate-500 mb-2">フォロー中</p>
                     <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                      {xInsights.followingCount?.toLocaleString("ja-JP") ?? "—"}
+                      {(xInsights.profile?.followingCount ?? xInsights.followingCount)?.toLocaleString("ja-JP") ?? "—"}
                     </p>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 text-center border border-slate-100 dark:border-slate-700">
                     <p className="text-xs text-slate-500 mb-2">総ツイート数</p>
                     <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                      {xInsights.tweetsCount?.toLocaleString("ja-JP") ?? "—"}
+                      {(xInsights.profile?.tweetsCount ?? xInsights.tweetsCount)?.toLocaleString("ja-JP") ?? "—"}
                     </p>
                   </div>
                 </div>
+
+                {/* 最近のツイートメトリクス */}
+                {(xInsights.recentTweets?.length > 0) && (
+                  <div className="mt-6">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">最近のツイート エンゲージメント</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-xs text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                            <th className="text-left pb-2 font-medium pr-4">ツイート</th>
+                            <th className="text-right pb-2 font-medium px-3">❤️ いいね</th>
+                            <th className="text-right pb-2 font-medium px-3">🔁 RT</th>
+                            <th className="text-right pb-2 font-medium px-3">💬 返信</th>
+                            <th className="text-right pb-2 font-medium pl-3">👁 表示数</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {xInsights.recentTweets.map((tweet: any) => (
+                            <tr key={tweet.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                              <td className="py-2 pr-4 text-slate-700 dark:text-slate-300 max-w-[200px] truncate">
+                                {tweet.text}
+                              </td>
+                              <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 font-mono">
+                                {tweet.likes?.toLocaleString() ?? "—"}
+                              </td>
+                              <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 font-mono">
+                                {tweet.retweets?.toLocaleString() ?? "—"}
+                              </td>
+                              <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-400 font-mono">
+                                {tweet.replies?.toLocaleString() ?? "—"}
+                              </td>
+                              <td className="py-2 pl-3 text-right text-slate-600 dark:text-slate-400 font-mono">
+                                {tweet.views?.toLocaleString() ?? "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
                 <p className="text-xs text-slate-400 mt-4 text-center">
                   ⚠️ データは12時間ごとに更新されます。BANリスク低減のため意図的にキャッシュしています。
@@ -310,6 +351,7 @@ export default function AnalyticsPage() {
             )}
           </div>
         )}
+
 
         {!isConnected ? (
           <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center border border-slate-200 dark:border-slate-800">

@@ -21,6 +21,7 @@
     "@supabase/supabase-js": "^2.99.1",
     "@types/pg": "^8.18.0",
     "@xyflow/react": "^12.10.1",
+    "agent-twitter-client": "^0.0.18",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "inngest": "^3.52.6",
