@@ -32,10 +32,11 @@ interface PlatformData {
 
 // Sparkline用ミニコンポーネント
 const Sparkline = ({ data, color }: { data: number[], color: string }) => {
-  const min = Math.min(...data);
-  const max = Math.max(...data);
+  const safeData = data.length > 0 ? data : [0, 0];
+  const min = Math.min(...safeData);
+  const max = Math.max(...safeData);
   const range = max - min || 1;
-  const points = data.map((d, i) => `${(i / (data.length - 1)) * 100},${100 - ((d - min) / range) * 100}`).join(' ');
+  const points = safeData.map((d, i) => `${(i / (safeData.length - 1 || 1)) * 100},${100 - ((d - min) / range) * 100}`).join(' ');
 
   return (
     <svg viewBox="0 -10 100 120" className="w-full h-8 mt-2 overflow-visible" preserveAspectRatio="none">
@@ -47,7 +48,7 @@ const Sparkline = ({ data, color }: { data: number[], color: string }) => {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="100" cy={100 - ((data[data.length - 1] - min) / range) * 100} r="4" fill={color} />
+      <circle cx="100" cy={100 - ((safeData[safeData.length - 1] - min) / range) * 100} r="4" fill={color} />
     </svg>
   );
 };
