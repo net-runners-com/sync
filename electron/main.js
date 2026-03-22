@@ -153,6 +153,23 @@ ipcMain.handle('threads-login', () => {
   });
 });
 
+// note ログイン
+ipcMain.handle('note-login', () => {
+  return openLoginWindow({
+    loginUrl: 'https://note.com/login',
+    title: 'note ログイン',
+    successUrlPattern: /note\.com\/(home|)$/,
+    cookieUrls: ['https://note.com'],
+    getCookies: async (cookies) => {
+      // noteのログインセッションに必要なCookie群をすべて取得して返却します
+      if (Object.keys(cookies).length > 0) {
+        return { success: true, allCookies: cookies };
+      }
+      return { success: false, error: 'Cookieが見つかりません' };
+    },
+  });
+});
+
 app.whenReady().then(() => {
   createWindow();
 

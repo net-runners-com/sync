@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Twitter, Instagram, Facebook, Link as LinkIcon, CheckCircle2, AlertCircle, Loader2, LogOut, Sun, Moon, Monitor, X } from "lucide-react";
+import { Twitter, Instagram, Facebook, Link as LinkIcon, CheckCircle2, AlertCircle, Loader2, LogOut, Sun, Moon, Monitor, X, PenTool } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useTheme } from "@/lib/ThemeContext";
 
@@ -16,6 +16,8 @@ interface SocialAccounts {
   instagram?: SocialAccountStatus[];
   twitter?: SocialAccountStatus[];
   google?: SocialAccountStatus[];
+  threads?: SocialAccountStatus[];
+  note?: SocialAccountStatus[];
   [key: string]: SocialAccountStatus[] | undefined;
 }
 
@@ -142,6 +144,16 @@ export default function SettingsPage() {
             if (res.ok) await fetchSocialAccounts();
             else { const e = await res.json(); alert("Threads連携エラー: " + (e.error || "不明")); }
           } else { alert(result.error || "Threads ログインがキャンセルされました"); }
+          setConnecting(null);
+          return;
+        }
+        if (provider === "note") {
+          const result = await electronAPI.noteLogin();
+          if (result.success) {
+            const res = await fetch("/api/user/social-accounts/note-playwright", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allCookies: result.allCookies }) });
+            if (res.ok) await fetchSocialAccounts();
+            else { const e = await res.json(); alert("note連携エラー: " + (e.error || "不明")); }
+          } else { alert(result.error || "note ログインがキャンセルされました"); }
           setConnecting(null);
           return;
         }
@@ -273,6 +285,18 @@ export default function SettingsPage() {
       borderColor: "border-slate-200 dark:border-slate-700",
       accentColor: "bg-slate-900 dark:bg-slate-700 hover:bg-black dark:hover:bg-slate-600",
       note: "Meta開発者ポータルで「Threads API」環境変数を設定してください。",
+      disabled: false,
+    },
+    {
+      id: "note",
+      name: "note",
+      icon: <PenTool className="w-6 h-6 text-emerald-600" />,
+      description: "noteにログインして記事の投稿を自動化できます。",
+      accounts: socialAccounts.note || [],
+      color: "bg-emerald-50 dark:bg-emerald-900/10",
+      borderColor: "border-emerald-200 dark:border-emerald-800",
+      accentColor: "bg-emerald-500 hover:bg-emerald-600 text-white",
+      note: "Electron版の専用ブラウザ機能により全自動でログインセッションを同期します。",
       disabled: false,
     },
   ];

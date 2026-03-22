@@ -9,4 +9,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   facebookLogin: () => ipcRenderer.invoke('facebook-login'),
   // Threads ログイン
   threadsLogin: () => ipcRenderer.invoke('threads-login'),
+  // note ログイン
+  noteLogin: () => ipcRenderer.invoke('note-login'),
 });
