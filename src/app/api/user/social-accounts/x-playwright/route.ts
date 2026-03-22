@@ -66,7 +66,8 @@ async function launchChromeWithCDP(): Promise<void> {
     await wait(500);
     if (await isCDPReady()) {
       console.log("[X-CDP] Chrome CDP ready after", (i + 1) * 0.5, "seconds");
-      return;
+        await wait(1000); // CDPプロトコル完全初期化を待つ
+        return;
     }
   }
 
@@ -96,7 +97,9 @@ export async function POST() {
     // （rebrowser-playwrightはconnectOverCDPと非互換のため標準を使う）
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { chromium } = require("playwright");
-    browser = await chromium.connectOverCDP(`http://localhost:${CDP_PORT}`);
+    browser = await chromium.connectOverCDP(`http://localhost:${CDP_PORT}`, {
+      timeout: 60000, // 60秒
+    });
 
     const defaultContext = browser.contexts()[0];
     const page = defaultContext
