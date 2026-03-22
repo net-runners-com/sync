@@ -166,7 +166,6 @@ ipcMain.handle('threads-login', () => {
 
 // note ログイン
 ipcMain.handle('note-login', () => {
-  let hasVisitedLogin = false;
   return openLoginWindow({
     loginUrl: 'https://note.com/login',
     title: 'note ログイン',
@@ -174,14 +173,9 @@ ipcMain.handle('note-login', () => {
     cookieUrls: ['https://note.com'],
     getCookies: async (cookies, url) => {
       const currentUrl = url || "";
-      // ログインページを一度でも訪れたフラグを立てる
-      if (currentUrl.includes("/login")) {
-        hasVisitedLogin = true;
-      }
-      
-      // ログインページ経由後にホーム画面（/ home /settings 等）に遷移したら完了とみなす
+      // ログインページ経由後、あるいは「すでにログイン済みで即座に」ホーム画面（/ や /home 等）に遷移した場合
       const isHome = /note\.com\/(home|settings|)$/.test(currentUrl);
-      if (hasVisitedLogin && isHome) {
+      if (isHome && Object.keys(cookies).length > 0) {
         return { success: true, allCookies: cookies };
       }
       return { success: false, error: 'まだログインが完了していません' };
