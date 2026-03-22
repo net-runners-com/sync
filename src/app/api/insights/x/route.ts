@@ -56,43 +56,44 @@ export async function GET(req: Request) {
     // DEBUG: ParseされたCookieを確認
     const parsedCookies = await scraper.getCookies();
     console.log("[X-Login-Debug] Parsed cookies count:", parsedCookies.length);
-    console.log("[X-Login-Debug] Cookie example:", parsedCookies.map(c => `${c.key}=***; domain=${c.domain}`).join(", "));
 
-    // ★ TEST: GraphQL (UserByRestId) 動作チェック
+    // 【重要ハック】Twitter仕様変更によりv1.1系API（verify_credentials等）が全滅しているため、
+    // agent-twitter-clientの isLoggedIn() はCookie認証では常に失敗(404)します。
+    // 強制的にisLoggedIn()をバイパスし、GraphQL (UserByRestId) 経由でプロフィールを取得させます。
     scraper.isLoggedIn = async () => true;
     if ((scraper as any).auth) {
       (scraper as any).auth.isLoggedIn = async () => true;
     }
-    try {
-      // 既存のOAuthから得たユーザーIDでテスト
-      const testUserId = "1983732467506016259";
-      console.log("[X-Login-Debug] Testing getScreenNameByUserId for", testUserId);
-      const testScreenName = await scraper.getScreenNameByUserId(testUserId);
-      console.log("[X-Login-Debug] testScreenName:", testScreenName);
-      
-      if (testScreenName) {
-        console.log("[X-Login-Debug] Testing getProfile for", testScreenName);
-        const testProfile = await scraper.getProfile(testScreenName);
-        console.log("[X-Login-Debug] testProfile name:", testProfile.name);
-      }
-    } catch (e) {
-      console.log("[X-Login-Debug] GraphQL test failed", e);
+
+    // クッキー（またはx-playwright連携時）と一緒にDB保存された数値ID(providerAccountId)を取得
+    const account = await prisma.account.findFirst({
+      where: { userId: session.user.id, provider: "twitter", scope: "cookie-auth" },
+    });
+
+    if (!account || !account.providerAccountId) {
+      return NextResponse.json({ error: "XアカウントのIDが見つかりません。再連携してください。" }, { status: 400 });
     }
 
-    const isLoggedIn = await scraper.isLoggedIn();
-    console.log("[X-Login-Debug] isLoggedIn result:", isLoggedIn);
-    
-    if (!isLoggedIn) {
+    const numericUserId = account.providerAccountId;
+    let meUsername: string | undefined = undefined;
+
+    try {
+      console.log(`[X-Login-Debug] Fetching screen_name for REST ID: ${numericUserId}`);
+      const screenName = await scraper.getScreenNameByUserId(numericUserId);
+      if (screenName) {
+        meUsername = screenName;
+      }
+    } catch (e: any) {
+      console.error("[X-Login-Debug] Failed to fetch screen_name via GraphQL:", e.message);
+    }
+
+    console.log("[X-Login-Debug] Extracted meUsername:", meUsername);
+
+    if (!meUsername || meUsername.startsWith("x_")) {
       return NextResponse.json(
-        { error: "Xのセッションが切れています。設定から再連携してください。（デバッグ中）" },
+        { error: "Xのセッションが切れているか、ユーザー情報の取得に失敗しました。設定から「連携解除」し、再度「連携する」をお試しください。" },
         { status: 401 }
       );
-    }
-
-    const meUsername = (await scraper.me())?.username;
-    console.log("[X-Login-Debug] meUsername:", meUsername);
-    if (!meUsername) {
-      return NextResponse.json({ error: "ユーザー名の取得に失敗しました" }, { status: 500 });
     }
 
     const insights = await fetchXInsights(scraper, meUsername);

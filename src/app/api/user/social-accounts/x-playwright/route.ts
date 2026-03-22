@@ -10,21 +10,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { authToken, ct0 } = await request.json();
+  const body = await request.json();
+  const { cookies } = body;
 
-  if (!authToken || !ct0) {
-    return NextResponse.json(
-      { error: "auth_token と ct0 が必要です" },
-      { status: 400 }
-    );
+  if (!cookies || !cookies.authToken || !cookies.ct0) {
+    return NextResponse.json({ error: "Cookieが不足しています" }, { status: 400 });
   }
+
+  const authToken = cookies.authToken;
+  const ct0 = cookies.ct0;
 
   try {
     let userId = `x_${Date.now()}`;
     let username = "X User";
     let name = "X User";
 
-    // X API でユーザー情報を取得
+    // ✅ twid から numeric userId を抽出 (例: u%3D1234567890 -> 1234567890)
+    if (cookies.twid) {
+      const decodedTwid = decodeURIComponent(cookies.twid);
+      if (decodedTwid.startsWith('u=')) {
+        userId = decodedTwid.replace('u=', '');
+      } else {
+        userId = decodedTwid;
+      }
+    }
+
+    // X API (v2) でユーザー情報を取得（既存処理 - クッキーのみでは403になりがちですがフォールバックとして残します）
     try {
       const meRes = await fetch(
         "https://api.twitter.com/2/users/me?user.fields=id,name,username",
