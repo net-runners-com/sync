@@ -277,18 +277,6 @@ export default function SettingsPage() {
           </p>
         </header>
 
-        {/* 重要なお知らせ */}
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 p-4 rounded-xl flex gap-3 items-start text-sm">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600 dark:text-amber-500 mt-0.5" />
-          <div className="text-amber-800 dark:text-amber-200">
-            <span className="font-bold block mb-1 text-amber-900 dark:text-amber-400">Metaアプリの設定が必要です</span>
-            Facebookでの連携を有効にするには、<strong>Meta for Developers</strong>でアプリを作成し、
-            <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded mx-1">FACEBOOK_CLIENT_ID</code>と
-            <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded mx-1">FACEBOOK_CLIENT_SECRET</code>
-            を<code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">.env</code>ファイルに設定してください。
-            コールバックURL: <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded text-xs select-all">http://localhost:3000/api/auth/callback/facebook</code>
-          </div>
-        </div>
 
         {/* テーマ設定 */}
         <div className="bg-white dark:bg-slate-900 border flex-shrink-0 border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
@@ -419,17 +407,6 @@ export default function SettingsPage() {
 
 
 
-        {/* スコープの説明 */}
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-          <h2 className="font-bold text-slate-900 dark:text-white mb-3">連携時に要求する権限について</h2>
-          <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-            <div className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 font-mono">pages_manage_posts</span><span>– Facebookページへの投稿</span></div>
-            <div className="flex gap-2"><span className="text-blue-500 dark:text-blue-400 font-mono">pages_read_engagement</span><span>– いいね・コメントなどのエンゲージメント読み取り</span></div>
-            <div className="flex gap-2"><span className="text-pink-500 dark:text-pink-400 font-mono">instagram_basic</span><span>– Instagramアカウント情報の読み取り</span></div>
-            <div className="flex gap-2"><span className="text-pink-500 dark:text-pink-400 font-mono">instagram_content_publish</span><span>– Instagram への画像・動画投稿</span></div>
-          </div>
-        </div>
       </div>
 
         {/* Twitter Account Switch Confirm Modal */}
