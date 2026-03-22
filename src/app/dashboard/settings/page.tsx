@@ -57,6 +57,39 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchSocialAccounts();
+
+    // Facebook SDKの読み込み
+    const initFacebookSdk = async () => {
+      try {
+        const res = await fetch("/api/user/social-accounts/facebook");
+        const data = await res.json();
+        if (data.appId) {
+          (window as any).fbAsyncInit = function() {
+            (window as any).FB.init({
+              appId      : data.appId,
+              cookie     : true,
+              xfbml      : true,
+              version    : 'v19.0'
+            });
+          };
+
+          (function(d, s, id){
+             var js, fjs = d.getElementsByTagName(s)[0];
+             if (d.getElementById(id)) {return;}
+             js = d.createElement(s) as HTMLScriptElement; js.id = id;
+             js.src = "https://connect.facebook.net/ja_JP/sdk.js";
+             if (fjs && fjs.parentNode) {
+               fjs.parentNode.insertBefore(js, fjs);
+             } else {
+               d.head.appendChild(js);
+             }
+           }(document, 'script', 'facebook-jssdk'));
+        }
+      } catch (err) {
+        console.error("Failed to init Facebook SDK", err);
+      }
+    };
+    initFacebookSdk();
   }, []);
 
   const fetchSocialAccounts = async () => {
@@ -76,6 +109,39 @@ export default function SettingsPage() {
   const handleConnect = async (provider: string) => {
     setConnecting(provider);
     try {
+      if (provider === "facebook") {
+        if (!(window as any).FB) {
+          alert("Facebook SDKが読み込まれていません。ページをリロードしてください。");
+          setConnecting(null);
+          return;
+        }
+        (window as any).FB.login(async function(response: any) {
+          if (response.authResponse) {
+            const { accessToken, userID } = response.authResponse;
+            try {
+              const res = await fetch("/api/user/social-accounts/facebook", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accessToken, userID }),
+              });
+              if (res.ok) {
+                await fetchSocialAccounts();
+              } else {
+                const err = await res.json();
+                alert("Facebook連携エラー: " + (err.error || "不明なエラー"));
+              }
+            } catch (apiErr) {
+              console.error(apiErr);
+              alert("通信エラーが発生しました");
+            }
+          } else {
+            console.log("User cancelled login or did not fully authorize.");
+          }
+          setConnecting(null);
+        }, { scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish', return_scopes: true });
+        return;
+      }
+
       if (provider === "threads") {
         await signIn("threads", { callbackUrl: "/dashboard/settings?connected=threads" });
       } else {
