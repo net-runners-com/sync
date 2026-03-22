@@ -81,8 +81,7 @@ ipcMain.handle('x-login', () => {
     getCookies: async (cookies) => {
       const authToken = cookies['auth_token'];
       const ct0 = cookies['ct0'];
-      const twid = cookies['twid'];
-      if (authToken && ct0) return { success: true, authToken, ct0, twid };
+      if (authToken && ct0) return { success: true, authToken, ct0 };
       return { success: false, error: 'auth_token/ct0 Cookieが見つかりません' };
     },
   });
