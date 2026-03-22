@@ -24,17 +24,26 @@ async function killExistingCDP(): Promise<void> {
 
 // Chromeをリモートデバッグモードで起動（既存プロファイルを利用）
 async function launchChromeWithCDP(): Promise<void> {
-  const cmd = [
-    `open -a "Google Chrome" --args`,
-    `--remote-debugging-port=${CDP_PORT}`,
-    `--user-data-dir="${USER_DATA_DIR}"`,
-    `--no-first-run`,
-    `--disable-blink-features=AutomationControlled`,
-  ].join(" ");
-  console.log("[X-Playwright] Launching Chrome with CDP...");
-  await execAsync(cmd);
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { spawn } = require("child_process");
 
-  // Chrome起動を待機（最大15秒）
+  const args = [
+    `--remote-debugging-port=${CDP_PORT}`,
+    `--user-data-dir=${USER_DATA_DIR}`,
+    "--no-first-run",
+    "--disable-blink-features=AutomationControlled",
+    "--no-default-browser-check",
+    "about:blank",
+  ];
+
+  console.log("[X-Playwright] Spawning Chrome with CDP...", CHROME_APP, args.join(" "));
+  const child = spawn(CHROME_APP, args, {
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
+
+  // Chrome CDP 準備完了を待機（最大15秒）
   for (let i = 0; i < 30; i++) {
     await new Promise((r) => setTimeout(r, 500));
     try {
