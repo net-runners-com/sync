@@ -34,18 +34,27 @@ export async function POST() {
 
     const page = await context.newPage();
 
-    // すでにXにログインしているか確認
-    await page.goto("https://x.com/home", { waitUntil: "networkidle" });
+    // すでにXにログインしているか確認 (タイムアウトは緩めに設定)
+    try {
+      await page.goto("https://x.com/home", { waitUntil: "load", timeout: 15000 });
+    } catch {
+      // タイムアウト or リダイレクトはOK (ログインページにいる場合など)
+    }
 
-    const isAlreadyLoggedIn = page.url().includes("/home");
+    const isAlreadyLoggedIn = page.url().includes("x.com/home");
 
     if (!isAlreadyLoggedIn) {
       // ログインページへ遷移
-      await page.goto("https://x.com/i/flow/login", { waitUntil: "networkidle" });
+      await page.goto("https://x.com/i/flow/login", { waitUntil: "load" });
       console.log("[X-Playwright] Waiting for user to login manually... (timeout: 5min)");
+      console.log("[X-Playwright] ⚠️  Googleでサインインは使わず、ID/パスワードでログインしてください。");
 
       // ユーザーが手動でログインするのを待つ
-      await page.waitForURL("https://x.com/home", { timeout: 300000 });
+      // urlが x.com/home に遷移するまで待機 (networkidleでなく load で)
+      await page.waitForFunction(
+        () => window.location.href.includes("x.com/home"),
+        { timeout: 300000 }
+      );
     }
 
     // Cookie取得
