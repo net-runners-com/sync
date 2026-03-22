@@ -222,9 +222,9 @@ export default function SettingsPage() {
   const platforms = [
     {
       id: "facebook",
-      name: "Facebook Pages",
+      name: "Facebook",
       icon: <Facebook className="w-6 h-6 text-blue-600" fill="currentColor" stroke="none" />,
-      description: "Facebookページへの投稿・スケジュール管理。Instagramへの投稿にも使用されます。",
+      description: "Facebookにログインして投稿を自動化できます。",
       accounts: socialAccounts.facebook || [],
       color: "bg-blue-50",
       borderColor: "border-blue-200",
