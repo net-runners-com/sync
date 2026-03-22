@@ -115,10 +115,10 @@ ipcMain.handle('facebook-login', () => {
 // Threads ログイン
 ipcMain.handle('threads-login', () => {
   return openLoginWindow({
-    loginUrl: 'https://www.threads.net/login',
+    loginUrl: 'https://www.threads.com/login',
     title: 'Threads ログイン',
-    successUrlPattern: /threads\.net(?!\/(login|accounts))/,
-    cookieDomains: ['.threads.net', '.instagram.com'],
+    successUrlPattern: /threads\.com(?!\/(login|accounts))/,
+    cookieDomains: ['.threads.com', '.instagram.com'],
     getCookies: async (cookies) => {
       const sessionId = cookies['sessionid'];
       const dsUserId = cookies['ds_user_id'];
