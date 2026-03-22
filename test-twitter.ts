@@ -4,40 +4,26 @@ import { Scraper } from 'agent-twitter-client';
 async function test() {
   const prisma = new PrismaClient();
   const account = await prisma.account.findFirst({
-    where: { provider: 'twitter' }
+    where: { provider: 'twitter', scope: 'cookie-auth' }
   });
-  if (!account) {
-    console.log('Twitter account not found in DB');
-    return;
-  }
+  if (!account) return console.log('No cookie account');
   
-  const authToken = account.access_token;
-  const ct0 = account.refresh_token;
-  console.log('DB Tokens found. auth_token:', authToken?.substring(0, 5) + '...', 'ct0:', ct0?.substring(0, 5) + '...');
-
   const scraper = new Scraper();
-  
-  const cookies = [
-    `auth_token=${authToken}; Domain=.twitter.com; Path=/; Secure; HttpOnly`,
-    `ct0=${ct0}; Domain=.twitter.com; Path=/; Secure; HttpOnly`
-  ];
-  
-  await scraper.setCookies(cookies);
-  const scrapedCookies = await scraper.getCookies();
-  console.log('Parsed cookies count:', scrapedCookies.length);
-  
+  await scraper.setCookies([
+    `auth_token=${account.access_token}; Domain=.twitter.com; Path=/; Secure; HttpOnly`,
+    `ct0=${account.refresh_token}; Domain=.twitter.com; Path=/; Secure; HttpOnly`
+  ]);
+
+  scraper.isLoggedIn = async () => true;
+  if ((scraper as any).auth) {
+    (scraper as any).auth.isLoggedIn = async () => true;
+  }
+
   try {
-    const isLoggedIn = await scraper.isLoggedIn();
-    console.log('isLoggedIn:', isLoggedIn);
-    
-    if (isLoggedIn) {
-      const me = await scraper.me();
-      console.log('me:', me?.username);
-    } else {
-      console.log('Not logged in. Cookies might be invalid or network request failed.');
-    }
+    const profile = await scraper.getProfile('elonmusk');
+    console.log('Successfully fetched profile!', profile.username);
   } catch (e) {
-    console.error('Error checking login:', e);
+    console.error('Failed to fetch profile:', e);
   }
 }
-test().catch(console.error).finally(() => process.exit(0));
+test().catch(console.log).finally(() => process.exit(0));
