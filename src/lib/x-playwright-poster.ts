@@ -35,6 +35,21 @@ export async function postToTwitterWithPlaywright(
       path: "/",
       secure: true,
     },
+    {
+      name: "auth_token",
+      value: account.access_token,
+      domain: ".x.com",
+      path: "/",
+      secure: true,
+      httpOnly: true,
+    },
+    {
+      name: "ct0",
+      value: account.refresh_token,
+      domain: ".x.com",
+      path: "/",
+      secure: true,
+    },
   ];
 
   console.log("[Playwright X] Launching visible browser...");
