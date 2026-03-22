@@ -27,12 +27,24 @@ export async function getXCookies(userId: string): Promise<XCookies | null> {
 /** Cookie認証済みの Scraper を返す */
 export async function createXScraper(cookies: XCookies): Promise<Scraper> {
   const scraper = new Scraper();
-  // tough-cookie互換のstring形式(Set-Cookie形式)で渡す
+
+  // tough-cookie の Cookie クラスで両ドメインに設定
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Cookie } = require("tough-cookie");
+
+  const makeCookie = (key: string, value: string, domain: string) =>
+    new Cookie({ key, value, domain, path: "/", secure: true, httpOnly: true });
+
   await scraper.setCookies([
-    `auth_token=${cookies.authToken}; Domain=.twitter.com; Path=/`,
-    `ct0=${cookies.ct0}; Domain=.twitter.com; Path=/`,
-    `auth_token=${cookies.authToken}; Domain=.x.com; Path=/`,
-    `ct0=${cookies.ct0}; Domain=.x.com; Path=/`,
+    makeCookie("auth_token", cookies.authToken, "twitter.com"),
+    makeCookie("ct0",        cookies.ct0,        "twitter.com"),
+    makeCookie("auth_token", cookies.authToken, "x.com"),
+    makeCookie("ct0",        cookies.ct0,        "x.com"),
+    makeCookie("auth_token", cookies.authToken, ".twitter.com"),
+    makeCookie("ct0",        cookies.ct0,        ".twitter.com"),
+    makeCookie("auth_token", cookies.authToken, ".x.com"),
+    makeCookie("ct0",        cookies.ct0,        ".x.com"),
   ]);
+
   return scraper;
 }
