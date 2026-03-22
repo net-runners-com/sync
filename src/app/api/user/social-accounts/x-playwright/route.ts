@@ -11,27 +11,31 @@ const CDP_PORT = 9222;
 const USER_DATA_DIR = `${process.env.HOME}/Library/Application Support/Google/Chrome`;
 const CHROME_APP = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
+// 古いChromeのCDPプロセスを強制终了
+async function killExistingCDP(): Promise<void> {
+  try {
+    const { exec } = require("child_process");
+    const { promisify } = require("util");
+    const execA = promisify(exec);
+    await execA(`lsof -ti :${CDP_PORT} | xargs kill -9 2>/dev/null || true`);
+    await new Promise((r) => setTimeout(r, 800)); // 少し待つ
+  } catch { /* ignore */ }
+}
+
 // Chromeをリモートデバッグモードで起動（既存プロファイルを利用）
 async function launchChromeWithCDP(): Promise<void> {
-  // すでにCDPが起動していないか確認
-  try {
-    const res = await fetch(`http://localhost:${CDP_PORT}/json/version`, {
-      signal: AbortSignal.timeout(1000),
-    });
-    if (res.ok) {
-      console.log("[X-Playwright] Chrome CDP already running");
-      return; // すでに起動済み
-    }
-  } catch {
-    // 起動していない → 新たに起動する
-  }
-
-  const cmd = `open -a "Google Chrome" --args --remote-debugging-port=${CDP_PORT} --user-data-dir="${USER_DATA_DIR}" --no-first-run --disable-blink-features=AutomationControlled`;
-  console.log("[X-Playwright] Launching Chrome with CDP:", cmd);
+  const cmd = [
+    `open -a "Google Chrome" --args`,
+    `--remote-debugging-port=${CDP_PORT}`,
+    `--user-data-dir="${USER_DATA_DIR}"`,
+    `--no-first-run`,
+    `--disable-blink-features=AutomationControlled`,
+  ].join(" ");
+  console.log("[X-Playwright] Launching Chrome with CDP...");
   await execAsync(cmd);
 
-  // Chrome起動を待機（最大10秒）
-  for (let i = 0; i < 20; i++) {
+  // Chrome起動を待機（最大15秒）
+  for (let i = 0; i < 30; i++) {
     await new Promise((r) => setTimeout(r, 500));
     try {
       const res = await fetch(`http://localhost:${CDP_PORT}/json/version`, {
@@ -60,7 +64,10 @@ export async function POST() {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { chromium } = require("playwright");
 
-    // Step 1: 既存ChromeをCDPモードで起動（初回のみ）
+    // Step 0: 古いCDPセッションを強制終了（rebrowser等の残骸に起因するハングを防ぐ）
+    await killExistingCDP();
+
+    // Step 1: 既存ChromeをCDPモードで起動
     await launchChromeWithCDP();
 
     // Step 2: CDPで既存Chromeに接続（プロファイルのCookieがそのまま使われる）
