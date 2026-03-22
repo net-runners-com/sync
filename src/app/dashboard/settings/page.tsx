@@ -231,15 +231,14 @@ export default function SettingsPage() {
       accentColor: "bg-blue-600 hover:bg-blue-700",
     },
     {
-      id: "facebook", // Instagramは同じFacebook OAuthで認証
+      id: "instagram",
       name: "Instagram",
       icon: <Instagram className="w-6 h-6 text-pink-600" />,
-      description: "Facebookアカウントで連携します。ビジネスアカウントのみ対応。",
-      accounts: socialAccounts.facebook || [],
+      description: "Instagramにログインして投稿を自動化できます。",
+      accounts: socialAccounts.instagram || [],
       color: "bg-pink-50",
       borderColor: "border-pink-200",
       accentColor: "bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700",
-      note: "Facebook連携と同時に設定されます",
     },
     {
       id: "twitter",
