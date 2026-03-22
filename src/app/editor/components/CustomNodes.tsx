@@ -1069,14 +1069,18 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // すぐにプレビューできるようにローカルのObjectURLを生成
+    const localUrl = URL.createObjectURL(file);
+    setPreview(localUrl);
     setUploading(true);
+    
     try {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const result = await res.json();
       if (res.ok && result.url) {
-        setPreview(result.url);
         updateNodeData(id, { imageUrl: result.url });
         toast.success("画像をアップロードしました");
       } else {
@@ -1084,10 +1088,15 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
       }
     } catch (err: any) {
       toast.error(err.message);
+      // 失敗した場合はプレビューを消す
+      setPreview("");
     } finally {
       setUploading(false);
     }
   };
+
+  // http(s)から始まる外部URL（R2等）の場合は認証エラーを回避するためプロキシAPIを通す
+  const displayUrl = preview.startsWith("http") ? `/api/proxy-image?url=${encodeURIComponent(preview)}` : preview;
 
   return (
     <>
@@ -1105,8 +1114,8 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
           {preview ? (
             <div className="relative w-full h-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 cursor-zoom-in group"
               onClick={() => setModalOpen(true)}>
-              <img src={preview} alt="preview" className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                onError={(e) => { console.warn('[ImageNode] Preview load error:', preview); setPreview(''); }}/>
+              <img src={displayUrl} alt="preview" className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                onError={(e) => { console.warn('[ImageNode] Preview load error:', displayUrl); setPreview(''); }}/>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <span className="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 bg-black/50 px-2 py-1 rounded-full">クリックして拡大</span>
               </div>
@@ -1130,7 +1139,7 @@ export const ImageInputNode = memo(({ id, data }: { id: string, data: any }) => 
               className="absolute top-2 right-2 z-10 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition-colors">
               <XIcon size={20}/>
             </button>
-            <img src={preview} alt="fullsize preview" className="max-w-full max-h-[85vh] mx-auto rounded-xl object-contain shadow-2xl"/>
+            <img src={displayUrl} alt="fullsize preview" className="max-w-full max-h-[85vh] mx-auto rounded-xl object-contain shadow-2xl"/>
           </div>
         </div>
       )}
@@ -1149,14 +1158,18 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // すぐにプレビューできるようにローカルのObjectURLを生成
+    const localUrl = URL.createObjectURL(file);
+    setPreview(localUrl);
     setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const result = await res.json();
       if (res.ok && result.url) {
-        setPreview(result.url);
         updateNodeData(id, { videoUrl: result.url });
         toast.success("動画をアップロードしました");
       } else {
@@ -1164,10 +1177,13 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
       }
     } catch (err: any) {
       toast.error(err.message);
+      setPreview("");
     } finally {
       setUploading(false);
     }
   };
+
+  const displayUrl = preview.startsWith("http") ? `/api/proxy-image?url=${encodeURIComponent(preview)}` : preview;
 
   return (
     <>
@@ -1184,7 +1200,7 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
           </div>
           {preview ? (
             <div className="relative group cursor-zoom-in" onClick={() => setModalOpen(true)}>
-              <video src={preview} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 max-h-40 pointer-events-none"
+              <video src={displayUrl} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 max-h-40 pointer-events-none"
                 onError={(e) => { console.warn('[VideoNode] Preview load error:', preview); setPreview(''); }}/>
               <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                 <span className="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 bg-black/50 px-2 py-1 rounded-full">クリックして拡大</span>
@@ -1214,7 +1230,7 @@ export const VideoInputNode = memo(({ id, data }: { id: string, data: any }) => 
               className="absolute top-2 right-2 z-10 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition-colors">
               <XIcon size={20}/>
             </button>
-            <video src={preview} controls autoPlay className="max-w-full max-h-[85vh] mx-auto rounded-xl shadow-2xl"/>
+            <video src={displayUrl} controls autoPlay className="max-w-full max-h-[85vh] mx-auto rounded-xl shadow-2xl"/>
           </div>
         </div>
       )}
