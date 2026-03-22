@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { postToTwitterWithPlaywright } from "./x-playwright-poster";
 
 // Facebook/Instagram Graph API のベースURL
 const FB_GRAPH_API = "https://graph.facebook.com/v19.0";
@@ -334,98 +335,19 @@ export async function postToSNS(
       }
       
       case "twitter": {
-        let mediaId: string | undefined;
-
-        if (imageUrl) {
-          try {
-            console.log("[Twitter] Fetching media from:", imageUrl);
-            const mediaRes = await fetch(imageUrl);
-            if (!mediaRes.ok) throw new Error(`画像の取得に失敗: ${mediaRes.status}`);
-            
-            const mediaBuffer = Buffer.from(await mediaRes.arrayBuffer());
-            const mediaContentType = mediaRes.headers.get("content-type") || "image/jpeg";
-            const isVideo = mediaContentType.startsWith("video");
-
-            console.log("[Twitter] Uploading media to v2 API. Size:", mediaBuffer.length, "Type:", mediaContentType);
-
-            const formData = new FormData();
-            const blob = new Blob([mediaBuffer], { type: mediaContentType });
-            formData.append("media", blob, isVideo ? "upload.mp4" : "upload.jpg");
-            formData.append("media_type", mediaContentType);
-            formData.append("media_category", isVideo ? "tweet_video" : "tweet_image");
-
-            const uploadRes = await fetch("https://api.twitter.com/2/media/upload", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: formData,
-            });
-
-            const uploadText = await uploadRes.text();
-            try {
-              const uploadData = JSON.parse(uploadText);
-              if (uploadRes.ok && uploadData.data && uploadData.data.id) {
-                mediaId = uploadData.data.id;
-                console.log("[Twitter] Media uploaded successfully. ID:", mediaId);
-              } else {
-                console.warn("[Twitter] Media upload failed:", uploadData);
-              }
-            } catch (e) {
-              console.warn("[Twitter] Media upload returned non-JSON:", uploadRes.status, uploadText.slice(0, 200));
-            }
-          } catch (mediaErr) {
-            console.warn("[Twitter] Media upload error:", mediaErr);
-          }
-        }
-
-        const postTweet = async (text: string, replyToId?: string) => {
-          const body: any = { text };
-          if (mediaId && !replyToId) {
-            // スレッド投稿の場合は最初のツイートにのみメディアを添付する
-            body.media = { media_ids: [mediaId] };
-          }
-          if (replyToId) body.reply = { in_reply_to_tweet_id: replyToId };
-
-          const twitterRes = await fetch("https://api.twitter.com/2/tweets", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-          const twitterText = await twitterRes.text();
-          let twitterData: any;
-          try {
-            twitterData = JSON.parse(twitterText);
-          } catch {
-            throw new Error(`Twitter API returned invalid JSON: ${twitterText.slice(0, 200)}`);
-          }
-          if (!twitterRes.ok || twitterData.errors) {
-            const errMsg = twitterData.errors?.[0]?.message || twitterData.detail || "Twitter API error";
-            throw new Error(errMsg);
-          }
-          return twitterData.data;
+        console.log("[SNS] Delegating Twitter post to Playwright automation...");
+        const result = await postToTwitterWithPlaywright(userId, message, imageUrl, threadTexts);
+        
+        return {
+          success: result.success,
+          platform,
+          data: result.data || {},
+          error: result.error || undefined,
         };
-
-        // ツリー投稿（スレッド）
-        if (threadTexts && threadTexts.length > 0) {
-          let lastTweetId: string | undefined;
-          const tweetIds: string[] = [];
-          for (const text of threadTexts) {
-            if (!text.trim()) continue;
-            const tweet = await postTweet(text, lastTweetId);
-            lastTweetId = tweet.id;
-            tweetIds.push(tweet.id);
-          }
-          return { success: true, platform, data: { tweetIds } };
-        }
-
-        // 通常ツイート
-        const tweet = await postTweet(message);
-        return { success: true, platform, data: tweet };
       }
-      
+
       default:
-        return { success: false, platform, error: "サポートされていないプラットフォームです。" };
+        throw new Error(`未対応のプラットフォームです: ${platform}`);
     }
   } catch (error: any) {
     console.error(`Error posting to ${platform}:`, error);
