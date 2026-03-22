@@ -2,63 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
-
-const CDP_PORT = 9222;
-const USER_DATA_DIR = `${process.env.HOME}/Library/Application Support/Google/Chrome`;
-const CHROME_APP = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-
-// 古いChromeのCDPプロセスを強制终了
-async function killExistingCDP(): Promise<void> {
-  try {
-    const { exec } = require("child_process");
-    const { promisify } = require("util");
-    const execA = promisify(exec);
-    await execA(`lsof -ti :${CDP_PORT} | xargs kill -9 2>/dev/null || true`);
-    await new Promise((r) => setTimeout(r, 800)); // 少し待つ
-  } catch { /* ignore */ }
-}
-
-// Chromeをリモートデバッグモードで起動（既存プロファイルを利用）
-async function launchChromeWithCDP(): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { spawn } = require("child_process");
-
-  const args = [
-    `--remote-debugging-port=${CDP_PORT}`,
-    `--user-data-dir=${USER_DATA_DIR}`,
-    "--no-first-run",
-    "--disable-blink-features=AutomationControlled",
-    "--no-default-browser-check",
-    "about:blank",
-  ];
-
-  console.log("[X-Playwright] Spawning Chrome with CDP...", CHROME_APP, args.join(" "));
-  const child = spawn(CHROME_APP, args, {
-    detached: true,
-    stdio: "ignore",
-  });
-  child.unref();
-
-  // Chrome CDP 準備完了を待機（最大15秒）
-  for (let i = 0; i < 30; i++) {
-    await new Promise((r) => setTimeout(r, 500));
-    try {
-      const res = await fetch(`http://localhost:${CDP_PORT}/json/version`, {
-        signal: AbortSignal.timeout(1000),
-      });
-      if (res.ok) {
-        console.log("[X-Playwright] Chrome CDP ready");
-        return;
-      }
-    } catch { /* まだ起動中 */ }
-  }
-
-  throw new Error("Google Chromeのリモートデバッグの起動に失敗しました。Chromeがインストールされているか確認してください。");
-}
+import path from "path";
+import os from "os";
 
 export async function POST() {
   const session = await getServerSession(authOptions);
@@ -66,80 +11,86 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let browser: any = null;
+  // 専用プロファイルディレクトリ（既存Chromeと干渉しない独立した領域）
+  // 一度ログインするとCookieがここに永続保存され、次回は自動ログイン状態になる
+  const userDataDir = path.join(os.homedir(), ".sync-app", "chrome-profile-x");
+
+  let context: any = null;
 
   try {
-    // CDP接続には通常のplaywrightを使用（既存の実Chromeに接続するため検知回避パッチは不要）
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { chromium } = require("playwright");
+    const { chromium } = require("rebrowser-playwright");
 
-    // Step 0: 古いCDPセッションを強制終了（rebrowser等の残骸に起因するハングを防ぐ）
-    await killExistingCDP();
+    // ベストプラクティス (Patchright準拠):
+    //   - launchPersistentContext で専用プロファイルを永続化
+    //   - channel: "chrome" で実Chromeバイナリを使用 (独立プロファイルなので既存Chromeと競合しない)
+    //   - headless: false / noViewport: true
+    //   - カスタムUA・ヘッダーは設定しない
+    context = await chromium.launchPersistentContext(userDataDir, {
+      channel: "chrome",
+      headless: false,
+      noViewport: true,
+    });
 
-    // Step 1: 既存ChromeをCDPモードで起動
-    await launchChromeWithCDP();
-
-    // Step 2: CDPで既存Chromeに接続（プロファイルのCookieがそのまま使われる）
-    browser = await chromium.connectOverCDP(`http://localhost:${CDP_PORT}`);
-
-    const contexts = browser.contexts();
-    const context = contexts.length > 0 ? contexts[0] : await browser.newContext();
     const page = await context.newPage();
 
-    // Step 3: x.com/home へ遷移してログイン済みか確認
-    console.log("[X-Playwright] Navigating to x.com/home...");
-    try {
-      await page.goto("https://x.com/home", { waitUntil: "load", timeout: 15000 });
-    } catch {
-      // リダイレクト or タイムアウトはOK
-    }
+    // プロファイルにCookieが残っていればホームに直行、なければログインページへ
+    await page.goto("https://x.com", { waitUntil: "load" });
+    await page.waitForTimeout(2000);
 
-    const isLoggedIn = page.url().includes("x.com/home");
+    const isLoggedIn = page.url().includes("x.com/home") || page.url().includes("x.com/?");
 
     if (!isLoggedIn) {
-      // ログインページへ遷移してユーザーが手動ログインするのを待つ
       await page.goto("https://x.com/i/flow/login", { waitUntil: "load" });
-      console.log("[X-Playwright] Chromeが起動しました。ローカルのChromeでXにログインしてください...");
 
+      console.log("[X-Playwright] ブラウザが起動しました。X.comにIDとパスワードでログインしてください。");
+      console.log("[X-Playwright] ※ 「Googleでサインイン」は使わないでください。");
+
+      // ログイン完了（x.com/home に遷移）したら自動的に続行
       await page.waitForFunction(
         () => window.location.href.includes("x.com/home"),
-        { timeout: 300000 }
+        { timeout: 300000 } // 最大5分待機
       );
     }
 
-    // Step 4: Cookie取得
+    console.log("[X-Playwright] Logged in! Fetching cookies...");
+
+    // Cookie取得
     const cookies = await context.cookies("https://x.com");
     const authToken = cookies.find((c: any) => c.name === "auth_token")?.value;
     const ct0 = cookies.find((c: any) => c.name === "ct0")?.value;
 
     if (!authToken || !ct0) {
-      await browser.close();
+      await context.close();
       return NextResponse.json(
-        { error: "Cookie取得に失敗しました。Xへのログインが完了しているか確認してください。" },
+        { error: "Cookie取得に失敗しました。ログインが完了しているか確認してください。" },
         { status: 400 }
       );
     }
 
-    // Step 5: ユーザー情報取得
+    // ユーザー情報取得
     const meRes = await page.evaluate(async (ct0Token: string) => {
       const res = await fetch(
         "https://api.twitter.com/2/users/me?user.fields=id,name,username,profile_image_url",
         {
-          headers: { "x-csrf-token": ct0Token, "content-type": "application/json" },
+          headers: {
+            "x-csrf-token": ct0Token,
+            "content-type": "application/json",
+          },
           credentials: "include",
         }
       );
       return res.json();
     }, ct0);
 
-    await browser.close();
-    browser = null;
+    await context.close();
+    context = null;
 
     const userId: string = meRes?.data?.id ?? `x_${Date.now()}`;
     const username: string = meRes?.data?.username ?? "Unknown";
     const name: string = meRes?.data?.name ?? "X User";
 
-    // Step 6: DBに保存
+    // DBに保存
     await prisma.account.upsert({
       where: { provider_providerAccountId: { provider: "twitter", providerAccountId: userId } },
       update: { access_token: authToken, refresh_token: ct0, scope: "cookie-auth" },
@@ -157,8 +108,8 @@ export async function POST() {
 
     return NextResponse.json({ success: true, username, name, userId });
   } catch (error: any) {
-    if (browser) {
-      try { await browser.close(); } catch { /* ignore */ }
+    if (context) {
+      try { await context.close(); } catch { /* ignore */ }
     }
     console.error("[X-Playwright] Error:", error);
     return NextResponse.json({ error: error.message || "Unknown error" }, { status: 500 });
