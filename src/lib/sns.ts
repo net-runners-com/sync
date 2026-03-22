@@ -334,42 +334,45 @@ export async function postToSNS(
       }
       
       case "twitter": {
-        // ⚠️ Twitter Media Upload v1.1 は OAuth 1.0aが必要で Bearer Tokenでは動作しない。
-        //    アップロード失敗時は画像なしでツイートする。
         let mediaId: string | undefined;
 
         if (imageUrl) {
           try {
+            console.log("[Twitter] Fetching media from:", imageUrl);
             const mediaRes = await fetch(imageUrl);
             if (!mediaRes.ok) throw new Error(`画像の取得に失敗: ${mediaRes.status}`);
+            
             const mediaBuffer = Buffer.from(await mediaRes.arrayBuffer());
-            const base64Media = mediaBuffer.toString("base64");
             const mediaContentType = mediaRes.headers.get("content-type") || "image/jpeg";
+            const isVideo = mediaContentType.startsWith("video");
 
-            const uploadRes = await fetch("https://upload.twitter.com/1.1/media/upload.json", {
+            console.log("[Twitter] Uploading media to v2 API. Size:", mediaBuffer.length, "Type:", mediaContentType);
+
+            const formData = new FormData();
+            const blob = new Blob([mediaBuffer], { type: mediaContentType });
+            formData.append("media", blob, isVideo ? "upload.mp4" : "upload.jpg");
+            formData.append("media_type", mediaContentType);
+            formData.append("media_category", isVideo ? "tweet_video" : "tweet_image");
+
+            const uploadRes = await fetch("https://api.twitter.com/2/media/upload", {
               method: "POST",
               headers: {
                 Authorization: `Bearer ${accessToken}`,
-                "Content-Type": "application/x-www-form-urlencoded",
               },
-              body: new URLSearchParams({
-                media_data: base64Media,
-                media_category: mediaContentType.startsWith("video") ? "tweet_video" : "tweet_image",
-              }),
+              body: formData,
             });
 
-            // レスポンスが空またはJSONでない場合を安全に処理
             const uploadText = await uploadRes.text();
-            if (!uploadText || !uploadText.trim().startsWith("{")) {
-              console.warn("[Twitter] Media upload returned non-JSON (OAuth 1.0a required):", uploadRes.status, uploadText.slice(0, 200));
-            } else {
+            try {
               const uploadData = JSON.parse(uploadText);
-              if (uploadRes.ok && uploadData.media_id_string) {
-                mediaId = uploadData.media_id_string;
-                console.log("[Twitter] Media uploaded:", mediaId);
+              if (uploadRes.ok && uploadData.data && uploadData.data.id) {
+                mediaId = uploadData.data.id;
+                console.log("[Twitter] Media uploaded successfully. ID:", mediaId);
               } else {
                 console.warn("[Twitter] Media upload failed:", uploadData);
               }
+            } catch (e) {
+              console.warn("[Twitter] Media upload returned non-JSON:", uploadRes.status, uploadText.slice(0, 200));
             }
           } catch (mediaErr) {
             console.warn("[Twitter] Media upload error:", mediaErr);
@@ -378,7 +381,10 @@ export async function postToSNS(
 
         const postTweet = async (text: string, replyToId?: string) => {
           const body: any = { text };
-          if (mediaId) body.media = { media_ids: [mediaId] };
+          if (mediaId && !replyToId) {
+            // スレッド投稿の場合は最初のツイートにのみメディアを添付する
+            body.media = { media_ids: [mediaId] };
+          }
           if (replyToId) body.reply = { in_reply_to_tweet_id: replyToId };
 
           const twitterRes = await fetch("https://api.twitter.com/2/tweets", {

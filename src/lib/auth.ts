@@ -24,7 +24,7 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         url: "https://twitter.com/i/oauth2/authorize",
         params: {
-          scope: "tweet.read tweet.write users.read offline.access",
+          scope: "tweet.read tweet.write users.read offline.access media.write",
           response_type: "code",
         },
       },
