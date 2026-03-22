@@ -34,13 +34,5 @@ export async function createXScraper(cookies: XCookies): Promise<Scraper> {
     `ct0=${cookies.ct0}; Domain=.twitter.com; Path=/; Secure; HttpOnly`,
   ]);
 
-  // 【重要】agent-twitter-clientの isLoggedIn() は内部で古い verify_credentials.json を叩いており、
-  // 現在のTwitter仕様(Cookieのみ認証時)では常に 404/403 エラーになります。
-  // そのため、強制的に isLoggedIn = true を返すように書き換えてチェックをバイパスします。
-  scraper.isLoggedIn = async () => true;
-  if ((scraper as any).auth) {
-    (scraper as any).auth.isLoggedIn = async () => true;
-  }
-
   return scraper;
 }
