@@ -166,18 +166,25 @@ ipcMain.handle('threads-login', () => {
 
 // note ログイン
 ipcMain.handle('note-login', () => {
+  let hasVisitedLogin = false;
   return openLoginWindow({
     loginUrl: 'https://note.com/login',
     title: 'note ログイン',
     successUrlPattern: null,
     cookieUrls: ['https://note.com'],
-    manualCloseMode: true,
-    getCookies: async (cookies) => {
-      // 手動クローズ時に呼ばれ、存在するCookieをすべて返却します
-      if (Object.keys(cookies).length > 0) {
+    getCookies: async (cookies, url) => {
+      const currentUrl = url || "";
+      // ログインページを一度でも訪れたフラグを立てる
+      if (currentUrl.includes("/login")) {
+        hasVisitedLogin = true;
+      }
+      
+      // ログインページ経由後にホーム画面（/ home /settings 等）に遷移したら完了とみなす
+      const isHome = /note\.com\/(home|settings|)$/.test(currentUrl);
+      if (hasVisitedLogin && isHome) {
         return { success: true, allCookies: cookies };
       }
-      return { success: false, error: 'Cookieが見つかりません' };
+      return { success: false, error: 'まだログインが完了していません' };
     },
   });
 });
