@@ -166,6 +166,7 @@ ipcMain.handle('threads-login', () => {
 
 // note ログイン
 ipcMain.handle('note-login', () => {
+  let hasPassedLogin = false;
   return openLoginWindow({
     loginUrl: 'https://note.com/login',
     title: 'note ログイン',
@@ -173,11 +174,28 @@ ipcMain.handle('note-login', () => {
     cookieUrls: ['https://note.com'],
     getCookies: async (cookies, url) => {
       const currentUrl = url || "";
-      // ログインページ経由後、あるいは「すでにログイン済みで即座に」ホーム画面（/ や /home 等）に遷移した場合
-      const isHome = /note\.com\/(home|settings|)$/.test(currentUrl);
-      if (isHome && Object.keys(cookies).length > 0) {
-        return { success: true, allCookies: cookies };
+      console.log("[note-login] URL:", currentUrl, "| Cookies:", Object.keys(cookies));
+
+      // ログインページ/サインアップページを通過したフラグを立てる
+      if (currentUrl.includes("note.com/login") || currentUrl.includes("note.com/signup")) {
+        hasPassedLogin = true;
+        return { success: false, error: 'ログインページです' };
       }
+
+      // note.comの任意のページで（loginでもsignupでもなく）cookieが存在すれば成功
+      // hasPassedLoginがtrueなら確実にログインフローを経由している
+      // そうでなくても、既ログイン状態でリダイレクトされた場合はcookieがある
+      if (currentUrl.includes("note.com") && Object.keys(cookies).length > 0) {
+        // note特有の認証Cookieがある場合のみ成功（セッション系のCookieで判定）
+        const sessionKeys = Object.keys(cookies).filter(k =>
+          k.includes("session") || k.includes("token") || k.includes("note_") || k.includes("user") || k.includes("jwt") || k.includes("auth")
+        );
+        console.log("[note-login] Session-like cookies:", sessionKeys);
+        if (sessionKeys.length > 0) {
+          return { success: true, allCookies: cookies };
+        }
+      }
+
       return { success: false, error: 'まだログインが完了していません' };
     },
   });
