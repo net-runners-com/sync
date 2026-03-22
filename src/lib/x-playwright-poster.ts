@@ -2,11 +2,46 @@ import { chromium } from "playwright";
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
 async function fetchImageBuffer(url: string): Promise<{ buffer: Buffer; mimeType: string; filename: string }> {
   if (url.startsWith("http")) {
+    // Cloudflare R2の署名が必要な非公開URL（.envの設定による）を検知した場合、S3Clientで取得する
+    if (url.includes("r2.cloudflarestorage.com") && process.env.R2_ACCOUNT_ID) {
+      console.log("[Playwright X] R2 URI detected, fetching securely via S3Client...");
+      const s3Client = new S3Client({
+        region: "auto",
+        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+          accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+        },
+      });
+      // バケット名とキーを抽出 (例: url=...com/sync/filename.jpg -> bucket="sync", key="filename.jpg")
+      const urlPath = url.split("r2.cloudflarestorage.com/")[1];
+      const parts = urlPath.split("/");
+      const bucketName = parts[0];
+      const key = parts.slice(1).join("/");
+      
+      const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
+      const response = await s3Client.send(command);
+      
+      if (!response.Body) throw new Error("R2 GetObject returned empty body");
+      const byteArray = await response.Body.transformToByteArray();
+      const contentType = response.ContentType || "image/jpeg";
+      const extension = contentType.split("/")[1] || "jpg";
+      
+      return {
+        buffer: Buffer.from(byteArray),
+        mimeType: contentType,
+        filename: `image.${extension}`
+      };
+    }
+
     const response = await fetch(url);
-    if (!response.ok) throw new Error("Failed to fetch image from URL");
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image from URL: ${response.status} ${response.statusText}`);
+    }
     const arrayBuffer = await response.arrayBuffer();
     const contentType = response.headers.get("content-type") || "image/jpeg";
     const extension = contentType.split("/")[1] || "jpg";
