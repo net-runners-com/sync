@@ -78,7 +78,7 @@ ipcMain.handle('x-login', () => {
 // Instagram ログイン
 ipcMain.handle('instagram-login', () => {
   return openLoginWindow({
-    loginUrl: 'https://www.instagram.com/accounts/login/',
+    loginUrl: 'https://www.instagram.com/#',
     title: 'Instagram ログイン',
     successUrlPattern: /instagram\.com(?!.*accounts\/login)/,
     cookieDomains: ['.instagram.com'],

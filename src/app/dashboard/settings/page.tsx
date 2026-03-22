@@ -232,7 +232,7 @@ export default function SettingsPage() {
     },
     {
       id: "facebook", // Instagramは同じFacebook OAuthで認証
-      name: "Instagram Business",
+      name: "Instagram",
       icon: <Instagram className="w-6 h-6 text-pink-600" />,
       description: "Facebookアカウントで連携します。ビジネスアカウントのみ対応。",
       accounts: socialAccounts.facebook || [],
