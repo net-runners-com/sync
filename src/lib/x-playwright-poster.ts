@@ -157,15 +157,24 @@ export async function postToTwitterWithPlaywright(
         console.log("[Playwright X] Setting image to macOS clipboard...");
         execSync(`osascript -e 'set the clipboard to (read (POSIX file "${tempFilePath}") as TIFF picture)'`);
         
-        // Xの入力欄に再度フォーカスを当てる
-        await page.focus(textboxSelector);
+        // Xの入力欄にクリックで確実にキャレット(カーソル)を入れる(Draft.js対応)
+        console.log("[Playwright X] Clicking textarea to focus caret...");
+        await page.click(textboxSelector);
         
         // Mac環境 (Meta+V) をエミュレートして貼り付けイベントを完全発火させる
         console.log("[Playwright X] Pressing Meta+V to paste image from OS clipboard...");
         await page.keyboard.press("Meta+V");
 
         console.log("[Playwright X] Image pasted to textarea natively, waiting for preview...");
-        await page.waitForTimeout(3000); // プレビュー画像がUIに反映されるのを待機
+        
+        // 画像プレビューエレメントが出現するまで待機することでアップロード完了を担保する
+        try {
+          await page.waitForSelector('[data-testid="attachments"]', { state: "visible", timeout: 10000 });
+          // アニメーション分だけ少し待つ
+          await page.waitForTimeout(1000);
+        } catch (waitErr) {
+          console.error("プレビューの出現がタイムアウトしました。ペーストに失敗した可能性があります。");
+        }
         
         // 使用済みのテンポラリファイルを削除
         try { fs.unlinkSync(tempFilePath); } catch (e) {}
@@ -178,7 +187,8 @@ export async function postToTwitterWithPlaywright(
     // 投稿ボタンをクリック
     console.log("[Playwright X] Clicking post button...");
     const postButtonLocator = page.locator('[data-testid="tweetButton"], [data-testid="tweetButtonInline"]').first();
-    await postButtonLocator.waitFor({ state: 'visible' });
+    
+    // Playwrightの locator.click() は自動でenabledになるまで待機してくれるため、そのままclickする
     await postButtonLocator.click();
 
     // ツイート完了（URLがホームに戻るか、Toastが表示されるのを待機）
