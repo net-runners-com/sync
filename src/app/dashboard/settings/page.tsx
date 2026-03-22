@@ -145,6 +145,16 @@ export default function SettingsPage() {
           setConnecting(null);
           return;
         }
+        if (provider === "twitter") {
+          const result = await electronAPI.xLogin();
+          if (result.success) {
+            const res = await fetch("/api/user/social-accounts/x-playwright", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ authToken: result.authToken, ct0: result.ct0 }) });
+            if (res.ok) await fetchSocialAccounts();
+            else { const e = await res.json(); alert("X連携エラー: " + (e.error || "不明")); }
+          } else { alert(result.error || "X ログインがキャンセルされました"); }
+          setConnecting(null);
+          return;
+        }
       }
 
       // === Web環境 fallback（OAuth） ===
