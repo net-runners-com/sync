@@ -17,47 +17,117 @@ function createWindow() {
   win.loadURL(url);
 }
 
-// X (Twitter) ログイン用の専用ウィンドウを開いてCookieを取得する
-ipcMain.handle('x-login', async () => {
-  return new Promise((resolve, reject) => {
+// ソーシャルログインウィンドウ共通関数
+function openLoginWindow({ loginUrl, title, successUrlPattern, cookieDomains, getCookies }) {
+  return new Promise((resolve) => {
     const loginWin = new BrowserWindow({
       width: 800,
       height: 700,
-      title: 'X (Twitter) ログイン',
+      title,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
       },
     });
 
-    loginWin.loadURL('https://x.com/i/flow/login');
+    loginWin.loadURL(loginUrl);
 
-    // ナビゲーションを監視してホームに到達したらCookieを取得
-    loginWin.webContents.on('did-navigate', async (event, url) => {
-      if (url.includes('x.com/home') || url.includes('twitter.com/home')) {
+    const checkNavigation = async (url) => {
+      if (successUrlPattern.test(url)) {
         try {
-          // x.com のCookieを取得
-          const cookies = await session.defaultSession.cookies.get({ domain: '.x.com' });
-          const authToken = cookies.find(c => c.name === 'auth_token')?.value;
-          const ct0 = cookies.find(c => c.name === 'ct0')?.value;
-
-          loginWin.close();
-
-          if (authToken && ct0) {
-            resolve({ success: true, authToken, ct0 });
-          } else {
-            resolve({ success: false, error: 'Cookieの取得に失敗しました' });
+          const allCookies = {};
+          for (const domain of cookieDomains) {
+            const cookies = await session.defaultSession.cookies.get({ domain });
+            cookies.forEach(c => { allCookies[c.name] = c.value; });
           }
+          const result = await getCookies(allCookies);
+          loginWin.close();
+          resolve(result);
         } catch (err) {
           loginWin.close();
-          reject(err);
+          resolve({ success: false, error: err.message });
         }
       }
-    });
+    };
+
+    loginWin.webContents.on('did-navigate', (event, url) => checkNavigation(url));
+    loginWin.webContents.on('did-navigate-in-page', (event, url) => checkNavigation(url));
 
     loginWin.on('closed', () => {
       resolve({ success: false, error: 'ウィンドウが閉じられました' });
     });
+  });
+}
+
+// X (Twitter) ログイン
+ipcMain.handle('x-login', () => {
+  return openLoginWindow({
+    loginUrl: 'https://x.com/i/flow/login',
+    title: 'X (Twitter) ログイン',
+    successUrlPattern: /x\.com\/home|twitter\.com\/home/,
+    cookieDomains: ['.x.com', '.twitter.com'],
+    getCookies: async (cookies) => {
+      const authToken = cookies['auth_token'];
+      const ct0 = cookies['ct0'];
+      if (authToken && ct0) return { success: true, authToken, ct0 };
+      return { success: false, error: 'auth_token/ct0 Cookieが見つかりません' };
+    },
+  });
+});
+
+// Instagram ログイン
+ipcMain.handle('instagram-login', () => {
+  return openLoginWindow({
+    loginUrl: 'https://www.instagram.com/accounts/login/',
+    title: 'Instagram ログイン',
+    successUrlPattern: /instagram\.com(?!.*accounts\/login)/,
+    cookieDomains: ['.instagram.com'],
+    getCookies: async (cookies) => {
+      const sessionId = cookies['sessionid'];
+      const dsUserId = cookies['ds_user_id'];
+      const csrftoken = cookies['csrftoken'];
+      if (sessionId && dsUserId) {
+        return { success: true, sessionId, dsUserId, csrftoken };
+      }
+      return { success: false, error: 'sessionid/ds_user_id Cookieが見つかりません' };
+    },
+  });
+});
+
+// Facebook ログイン
+ipcMain.handle('facebook-login', () => {
+  return openLoginWindow({
+    loginUrl: 'https://www.facebook.com/login',
+    title: 'Facebook ログイン',
+    successUrlPattern: /facebook\.com(?!\/(login|r\.php))/,
+    cookieDomains: ['.facebook.com'],
+    getCookies: async (cookies) => {
+      const cUser = cookies['c_user'];
+      const xs = cookies['xs'];
+      const datr = cookies['datr'];
+      if (cUser && xs) {
+        return { success: true, cUser, xs, datr };
+      }
+      return { success: false, error: 'c_user/xs Cookieが見つかりません' };
+    },
+  });
+});
+
+// Threads ログイン
+ipcMain.handle('threads-login', () => {
+  return openLoginWindow({
+    loginUrl: 'https://www.threads.net/login',
+    title: 'Threads ログイン',
+    successUrlPattern: /threads\.net(?!\/(login|accounts))/,
+    cookieDomains: ['.threads.net', '.instagram.com'],
+    getCookies: async (cookies) => {
+      const sessionId = cookies['sessionid'];
+      const dsUserId = cookies['ds_user_id'];
+      if (sessionId) {
+        return { success: true, sessionId, dsUserId };
+      }
+      return { success: false, error: 'sessionid Cookieが見つかりません' };
+    },
   });
 });
 

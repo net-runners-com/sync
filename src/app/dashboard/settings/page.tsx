@@ -110,54 +110,68 @@ export default function SettingsPage() {
 
   const handleConnect = async (provider: string) => {
     setConnecting(provider);
+    const electronAPI = (window as any).electronAPI;
+
     try {
-      if (provider === "facebook") {
-        if (!(window as any).FB) {
-          alert("Facebook SDKが読み込まれていません。ページをリロードしてください。");
+      // === Electron環境ではBrowserWindowでログイン ===
+      if (electronAPI) {
+        if (provider === "facebook") {
+          const result = await electronAPI.facebookLogin();
+          if (result.success) {
+            const res = await fetch("/api/user/social-accounts/facebook-electron", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(result) });
+            if (res.ok) await fetchSocialAccounts();
+            else { const e = await res.json(); alert("Facebook連携エラー: " + (e.error || "不明")); }
+          } else { alert(result.error || "Facebook ログインがキャンセルされました"); }
           setConnecting(null);
           return;
         }
+        if (provider === "instagram") {
+          const result = await electronAPI.instagramLogin();
+          if (result.success) {
+            const res = await fetch("/api/user/social-accounts/instagram-electron", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(result) });
+            if (res.ok) await fetchSocialAccounts();
+            else { const e = await res.json(); alert("Instagram連携エラー: " + (e.error || "不明")); }
+          } else { alert(result.error || "Instagram ログインがキャンセルされました"); }
+          setConnecting(null);
+          return;
+        }
+        if (provider === "threads") {
+          const result = await electronAPI.threadsLogin();
+          if (result.success) {
+            const res = await fetch("/api/user/social-accounts/threads-electron", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(result) });
+            if (res.ok) await fetchSocialAccounts();
+            else { const e = await res.json(); alert("Threads連携エラー: " + (e.error || "不明")); }
+          } else { alert(result.error || "Threads ログインがキャンセルされました"); }
+          setConnecting(null);
+          return;
+        }
+      }
+
+      // === Web環境 fallback（OAuth） ===
+      if (provider === "facebook") {
+        if (!(window as any).FB) { alert("Facebook SDKが読み込まれていません。"); setConnecting(null); return; }
         (window as any).FB.login(async function(response: any) {
           if (response.authResponse) {
             const { accessToken, userID } = response.authResponse;
-            try {
-              const res = await fetch("/api/user/social-accounts/facebook", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ accessToken, userID }),
-              });
-              if (res.ok) {
-                await fetchSocialAccounts();
-              } else {
-                const err = await res.json();
-                alert("Facebook連携エラー: " + (err.error || "不明なエラー"));
-              }
-            } catch (apiErr) {
-              console.error(apiErr);
-              alert("通信エラーが発生しました");
-            }
-          } else {
-            console.log("User cancelled login or did not fully authorize.");
+            const res = await fetch("/api/user/social-accounts/facebook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accessToken, userID }) });
+            if (res.ok) await fetchSocialAccounts();
+            else { const err = await res.json(); alert("Facebook連携エラー: " + (err.error || "不明なエラー")); }
           }
           setConnecting(null);
         }, { scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish', return_scopes: true });
         return;
       }
-
       if (provider === "threads") {
         await signIn("threads", { callbackUrl: "/dashboard/settings?connected=threads" });
       } else {
-        await signIn(
-          provider,
-          { callbackUrl: "/dashboard/settings?connected=" + provider },
-          { prompt: provider === "twitter" ? "consent" : "select_account" }
-        );
+        await signIn(provider, { callbackUrl: "/dashboard/settings?connected=" + provider }, { prompt: provider === "twitter" ? "consent" : "select_account" });
       }
     } catch (error) {
       console.error(`Failed to connect ${provider}:`, error);
       setConnecting(null);
     }
   };
+
 
   const handleConnectPlaywright = async () => {
     setXPlaywrightLoading(true);
